@@ -1,4 +1,5 @@
 import React from 'react';
+import YandexMap from '@/components/YandexMap'; // Import the map component
 
 // Define the structure of a Property based on the actual API response
 // Consider moving this interface to a shared types file
@@ -17,6 +18,7 @@ interface Property {
   createdAt: string;
   updatedAt: string;
   publishedAt?: string | null;
+  coordinates?: { latitude: number; longitude: number } | null; // Add coordinates type
   // TODO: Add populated relations (category, location, amenities, images) later
 }
 
@@ -71,6 +73,20 @@ export default async function PropertyDetailsPage({ params }: PropertyDetailsPag
     return <div className="container mx-auto p-4 text-center">Property not found.</div>;
   }
 
+  // Parse coordinates safely
+  let mapCenter: [number, number] | undefined;
+  let placemarkCoords: [number, number] | undefined;
+  try {
+    if (property.coordinates?.latitude && property.coordinates?.longitude) {
+      mapCenter = [property.coordinates.latitude, property.coordinates.longitude];
+      placemarkCoords = mapCenter; // Use same coords for placemark
+    }
+  } catch (e) {
+    console.error("Error parsing coordinates:", e);
+    // Use a default center if coordinates are invalid/missing
+    mapCenter = [41.2995, 69.2401]; // Default to Tashkent center
+  }
+
   // TODO: Add image display
   // TODO: Display relations (Category, Location, Amenities)
 
@@ -80,10 +96,20 @@ export default async function PropertyDetailsPage({ params }: PropertyDetailsPag
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
           {/* Image Placeholder */}
+          {/* Image Placeholder */}
           <div className="w-full h-96 bg-gray-300 flex items-center justify-center text-gray-500 mb-4 rounded">
             Image Placeholder
           </div>
-          <h2 className="text-2xl font-semibold mb-2">Description</h2>
+
+          {/* Map Section */}
+          <h2 className="text-2xl font-semibold mt-6 mb-2">Location</h2>
+          {mapCenter ? (
+            <YandexMap center={mapCenter} placemarkCoords={placemarkCoords} zoom={15} />
+          ) : (
+            <p>Coordinates not available for map display.</p>
+          )}
+
+          <h2 className="text-2xl font-semibold mt-6 mb-2">Description</h2>
           <p className="text-gray-700 whitespace-pre-wrap">
             {property.description || 'No description available.'}
           </p>

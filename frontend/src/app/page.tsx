@@ -87,10 +87,13 @@ interface HomePageProps {
 
 export default async function Home({ searchParams }: HomePageProps) {
 
-  // Prepare filters based on searchParams
+  // Ensure searchParams is resolved before accessing its properties
+  const resolvedSearchParams = await searchParams;
+
+  // Prepare filters based on resolvedSearchParams
   const filters: GetPropertiesParams = {};
-  if (searchParams?.listingType) {
-    filters.listingType = searchParams.listingType;
+  if (resolvedSearchParams?.listingType) {
+    filters.listingType = resolvedSearchParams.listingType;
   }
   // TODO: Add locationId filter once relational filtering is resolved
   // if (searchParams?.locationId) {
