@@ -1,7 +1,8 @@
 'use client'; // Client component for form interaction
 
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation'; // Import useRouter for redirection
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext'; // Import useAuth hook
 
 // Function to handle the login API call
 const handleLogin = async (identifier: string, password: string): Promise<any> => {
@@ -40,8 +41,9 @@ const handleLogin = async (identifier: string, password: string): Promise<any> =
 };
 
 const LoginForm: React.FC = () => {
-  const router = useRouter(); // Initialize router
-  const [identifier, setIdentifier] = useState(''); // Can be email or username
+  const router = useRouter();
+  const { login } = useAuth(); // Get login function from context
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(''); // To display login errors
 
@@ -54,11 +56,15 @@ const LoginForm: React.FC = () => {
     }
     try {
       const loginResponse = await handleLogin(identifier, password);
-      // On success:
-      alert('Login Successful!'); // Placeholder success message
-      // TODO: Implement proper session management
-      // TODO: Redirect to a protected page or homepage
-      router.push('/'); // Redirect to homepage for now
+      // On success, call the context login function
+      if (loginResponse.jwt && loginResponse.user) {
+        login(loginResponse.jwt, loginResponse.user); // Update context state
+        // alert('Login Successful!'); // Remove alert
+        router.push('/'); // Redirect to homepage
+      } else {
+        // Should not happen if API call was successful, but good practice
+        throw new Error('Login response missing JWT or user data.');
+      }
     } catch (err) {
       console.error("Login failed in component:", err);
       // Use error message from handleLogin if available, otherwise generic
