@@ -1,61 +1,45 @@
-# 🚀 Getting started with Strapi
+# Uzbekistan Real Estate Aggregator - Backend (Strapi)
 
-Strapi comes with a full featured [Command Line Interface](https://docs.strapi.io/dev-docs/cli) (CLI) which lets you scaffold and manage your project in seconds.
+This directory contains the Strapi CMS backend for the application.
 
-### `develop`
+## Setup
 
-Start your Strapi application with autoReload enabled. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-develop)
+1.  Ensure Node.js (LTS recommended, check `.nvmrc` if available) and npm are installed.
+2.  Navigate to this directory (`/mnt/vhd/uz-real-estate-aggregator/backend`).
+3.  Install dependencies: `npm install`
+4.  (Optional) Configure database settings in `config/database.ts` (defaults to SQLite).
+5.  (Optional) Configure environment variables in `.env` (copy from `.env.example`).
 
-```
+## Development
+
+To run the Strapi development server:
+
+```bash
 npm run develop
-# or
-yarn develop
 ```
 
-### `start`
+This will start the server (usually on `http://localhost:1337`) with auto-reloading. Access the admin panel at `http://localhost:1337/admin`.
 
-Start your Strapi application with autoReload disabled. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-start)
+## Building
 
-```
-npm run start
-# or
-yarn start
-```
+To build the admin panel for production:
 
-### `build`
-
-Build your admin panel. [Learn more](https://docs.strapi.io/dev-docs/cli#strapi-build)
-
-```
+```bash
 npm run build
-# or
-yarn build
 ```
 
-## ⚙️ Deployment
+## Starting in Production
 
-Strapi gives you many possible deployment options for your project including [Strapi Cloud](https://cloud.strapi.io). Browse the [deployment section of the documentation](https://docs.strapi.io/dev-docs/deployment) to find the best solution for your use case.
+To start the server in production mode (after building):
 
+```bash
+NODE_ENV=production npm run start
 ```
-yarn strapi deploy
-```
 
-## 📚 Learn more
+## Content Types
 
-- [Resource center](https://strapi.io/resource-center) - Strapi resource center.
-- [Strapi documentation](https://docs.strapi.io) - Official Strapi documentation.
-- [Strapi tutorials](https://strapi.io/tutorials) - List of tutorials made by the core team and the community.
-- [Strapi blog](https://strapi.io/blog) - Official Strapi blog containing articles made by the Strapi team and the community.
-- [Changelog](https://strapi.io/changelog) - Find out about the Strapi product updates, new features and general improvements.
-
-Feel free to check out the [Strapi GitHub repository](https://github.com/strapi/strapi). Your feedback and contributions are welcome!
-
-## ✨ Community
-
-- [Discord](https://discord.strapi.io) - Come chat with the Strapi community including the core team.
-- [Forum](https://forum.strapi.io/) - Place to discuss, ask questions and find answers, show your Strapi project and get feedback or just talk with other Community members.
-- [Awesome Strapi](https://github.com/strapi/awesome-strapi) - A curated list of awesome things related to Strapi.
-
----
-
-<sub>🤫 Psst! [Strapi is hiring](https://strapi.io/careers).</sub>
+*   Property
+*   Category
+*   Location
+*   Amenity
+*   User (Users & Permissions Plugin - extended)

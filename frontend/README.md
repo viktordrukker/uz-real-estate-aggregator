@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Uzbekistan Real Estate Aggregator - Frontend (Next.js)
 
-## Getting Started
+This directory contains the Next.js frontend for the application.
 
-First, run the development server:
+## Setup
+
+1.  Ensure Node.js (LTS recommended, check `.nvmrc` if available) and npm are installed.
+2.  Navigate to this directory (`/mnt/vhd/uz-real-estate-aggregator/frontend`).
+3.  Install dependencies: `npm install`
+4.  Create a `.env.local` file (copy from `.env.example` if it exists) and add necessary environment variables:
+    *   `NEXT_PUBLIC_YANDEX_MAPS_API_KEY`: Your API key for Yandex Maps.
+    *   `STRAPI_URL` (Optional): The URL of the backend Strapi server (defaults to `http://localhost:1337`).
+
+## Development
+
+To run the Next.js development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+This will start the server (usually on `http://localhost:3000`) with Fast Refresh enabled.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Building
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+To build the application for production:
 
-## Learn More
+```bash
+npm run build
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Starting in Production
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+To start the server in production mode (after building):
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run start
+```
 
-## Deploy on Vercel
+## Key Features Implemented
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+*   Property List display
+*   Property Details display
+*   Basic Listing Type filter
+*   Yandex Map display on details page
+*   Placeholder Login/Register pages
