@@ -83,12 +83,6 @@
       "relation": "manyToMany",
       "target": "api::amenity.amenity",
       "inversedBy": "properties"
-    },
-    "favoritedBy": {
-      "type": "relation",
-      "relation": "manyToMany",
-      "target": "plugin::users-permissions.user",
-      "inversedBy": "favoriteProperties"
     }
   }
 }

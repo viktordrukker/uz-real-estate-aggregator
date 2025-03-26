@@ -1,16 +1,46 @@
 'use client'; // Client component for form interaction
 
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation'; // Import useRouter for redirection
 
-// TODO: Implement actual API call and state management
-const handleLogin = async (identifier: string, password: string): Promise<void> => {
+// Function to handle the login API call
+const handleLogin = async (identifier: string, password: string): Promise<any> => {
   console.log('Attempting login with:', { identifier, password });
-  alert('Login functionality not yet implemented.');
-  // Replace with API call to Strapi: POST /api/auth/local
-  // Handle response, store token/user info, redirect
+  const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'; // Use NEXT_PUBLIC_ prefix if needed client-side
+
+  try {
+    const res = await fetch(`${strapiUrl}/api/auth/local`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ identifier, password }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      // Handle Strapi error format
+      const errorMessage = data?.error?.message || 'Login failed due to an unknown error.';
+      console.error('Strapi login error:', data);
+      throw new Error(errorMessage);
+    }
+
+    console.log('Login successful:', data);
+    // data contains { jwt: '...', user: { ... } }
+    // TODO: Store JWT and user info securely (e.g., httpOnly cookie, context)
+    // TODO: Redirect user after successful login
+    return data; // Return data on success
+
+  } catch (error) {
+    console.error('Network or other error during login:', error);
+    // Re-throw the error to be caught by handleSubmit
+    throw error instanceof Error ? error : new Error('An unexpected error occurred during login.');
+  }
 };
 
 const LoginForm: React.FC = () => {
+  const router = useRouter(); // Initialize router
   const [identifier, setIdentifier] = useState(''); // Can be email or username
   const [password, setPassword] = useState('');
   const [error, setError] = useState(''); // To display login errors
@@ -23,11 +53,16 @@ const LoginForm: React.FC = () => {
       return;
     }
     try {
-      await handleLogin(identifier, password);
-      // On success, redirect or update UI (handled by handleLogin)
+      const loginResponse = await handleLogin(identifier, password);
+      // On success:
+      alert('Login Successful!'); // Placeholder success message
+      // TODO: Implement proper session management
+      // TODO: Redirect to a protected page or homepage
+      router.push('/'); // Redirect to homepage for now
     } catch (err) {
-      console.error("Login failed:", err);
-      setError('Login failed. Please check your credentials.'); // Generic error
+      console.error("Login failed in component:", err);
+      // Use error message from handleLogin if available, otherwise generic
+      setError(err instanceof Error ? err.message : 'Login failed. Please check your credentials.');
     }
   };
 
