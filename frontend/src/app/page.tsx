@@ -28,8 +28,13 @@ interface GetPropertiesParams {
   // Add other filters like category, price range etc. later
 }
 
+// Utility function to introduce a delay
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 // Function to fetch properties from Strapi API, now with filtering
 async function getProperties(params: GetPropertiesParams = {}): Promise<Property[]> {
+  await wait(2000); // Add a 2-second delay for testing loading state
+
   const strapiUrl = process.env.STRAPI_URL || 'http://localhost:1337';
   const queryParams = new URLSearchParams();
 
