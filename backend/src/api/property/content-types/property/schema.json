@@ -1,0 +1,88 @@
+{
+  "kind": "collectionType",
+  "collectionName": "properties",
+  "info": {
+    "singularName": "property",
+    "pluralName": "properties",
+    "displayName": "Property",
+    "description": ""
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "text"
+    },
+    "price": {
+      "type": "decimal",
+      "required": true
+    },
+    "area": {
+      "type": "decimal",
+      "required": true
+    },
+    "rooms": {
+      "type": "integer"
+    },
+    "floor": {
+      "type": "integer"
+    },
+    "address": {
+      "type": "string"
+    },
+    "listingType": {
+      "type": "enumeration",
+      "enum": [
+        "Buy",
+        "Rent"
+      ],
+      "required": true
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "Available",
+        "Sold",
+        "Rented"
+      ],
+      "default": "Available",
+      "required": true
+    },
+    "images": {
+      "type": "media",
+      "multiple": true,
+      "required": false,
+      "allowedTypes": [
+        "images",
+        "videos"
+      ]
+    },
+    "coordinates": {
+      "type": "json"
+    },
+    "category": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::category.category",
+      "inversedBy": "properties"
+    },
+    "location": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::location.location",
+      "inversedBy": "properties"
+    },
+    "amenities": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::amenity.amenity",
+      "inversedBy": "properties"
+    }
+  }
+}
