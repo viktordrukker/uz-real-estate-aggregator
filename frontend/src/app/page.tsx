@@ -19,15 +19,40 @@ interface Property {
   // Consider moving this interface to a shared types file
 }
 
-import PropertyCard from '@/components/PropertyCard'; // Assuming default alias setup or adjust path
+import PropertyCard from '@/components/PropertyCard';
+import PropertyFilters from '@/components/PropertyFilters'; // Import the filters component
 
-// Function to fetch properties from Strapi API
-async function getProperties(): Promise<Property[]> {
+interface GetPropertiesParams {
+  locationId?: number; // Changed from location name to location ID
+  listingType?: 'Buy' | 'Rent';
+  // Add other filters like category, price range etc. later
+}
+
+// Function to fetch properties from Strapi API, now with filtering
+async function getProperties(params: GetPropertiesParams = {}): Promise<Property[]> {
   const strapiUrl = process.env.STRAPI_URL || 'http://localhost:1337';
+  const queryParams = new URLSearchParams();
+
+  // Add filters to query parameters
+  // NOTE: Filtering by relation (locationId) seems problematic (400 error), needs investigation.
+  // if (params.locationId) {
+  //   queryParams.append('filters[location][$eq]', String(params.locationId));
+  //   queryParams.append('populate', 'location');
+  // }
+  if (params.listingType) {
+    // Filtering by a direct attribute
+    queryParams.append('filters[listingType][$eq]', params.listingType);
+  }
+
+  // TODO: Add population for other relations if needed for display
+
+  const queryString = queryParams.toString();
+  const apiUrl = `${strapiUrl}/api/properties${queryString ? `?${queryString}` : ''}`;
+  console.log("Fetching properties from:", apiUrl); // Log the final URL
+
   try {
     // Fetch data from Strapi API endpoint for properties
-    // We previously enabled public 'find' access
-    const res = await fetch(`${strapiUrl}/api/properties`, { cache: 'no-store' }); // Use no-store for development to see changes
+    const res = await fetch(apiUrl, { cache: 'no-store' }); // Use no-store for development
 
     if (!res.ok) {
       // Throw an error if the response is not successful
@@ -51,12 +76,35 @@ async function getProperties(): Promise<Property[]> {
 
 
 // Make the component async to use await for data fetching
-export default async function Home() {
-  const properties = await getProperties();
+// This page now needs access to searchParams to pass filters
+interface HomePageProps {
+  searchParams?: {
+    listingType?: 'Buy' | 'Rent';
+    locationId?: string; // Search params are strings
+    // Add other potential search params here
+  };
+}
+
+export default async function Home({ searchParams }: HomePageProps) {
+
+  // Prepare filters based on searchParams
+  const filters: GetPropertiesParams = {};
+  if (searchParams?.listingType) {
+    filters.listingType = searchParams.listingType;
+  }
+  // TODO: Add locationId filter once relational filtering is resolved
+  // if (searchParams?.locationId) {
+  //   filters.locationId = parseInt(searchParams.locationId, 10);
+  // }
+
+  // Fetch properties based on current filters
+  const properties = await getProperties(filters);
 
   return (
     <main className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6">Property Listings</h1>
+
+      <PropertyFilters /> {/* Add the filter component */}
 
       {properties.length === 0 ? (
         <p>No properties found.</p>
