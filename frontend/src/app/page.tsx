@@ -1,7 +1,8 @@
 // Define the structure of a Property based on the actual API response
 // Strapi v5+ often returns a flatter structure by default
 interface Property {
-  id: number;
+  id: number; // Keep the numerical ID if needed for keys, etc.
+  documentId: string; // Add the documentId used for API lookups in v5
   title: string;
   description?: string | null; // Make optional fields nullable
   price: number;

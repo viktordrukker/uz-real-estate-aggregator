@@ -1,9 +1,11 @@
 import React from 'react';
+import Link from 'next/link'; // Import Link
 
 // Define the structure of a Property based on the actual API response
 // (Same interface as in page.tsx - consider moving to a shared types file later)
 interface Property {
-  id: number;
+  id: number; // Keep the numerical ID if needed for keys, etc.
+  documentId: string; // Add the documentId used for API lookups in v5
   title: string;
   description?: string | null;
   price: number;
@@ -58,8 +60,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property }) => {
           {/* <p>Category: {property.category?.data?.attributes?.name}</p> */}
           {/* <p>Location: {property.location?.data?.attributes?.name}</p> */}
         </div>
-        {/* TODO: Add Link to details page */}
-        {/* <a href={`/properties/${property.id}`} className="text-blue-500 hover:underline mt-2 inline-block">View Details</a> */}
+        {/* Link using documentId for Strapi v5 */}
+        <Link href={`/properties/${property.documentId}`} className="text-blue-500 hover:underline mt-4 inline-block">
+          View Details
+        </Link>
       </div>
     </div>
   );
