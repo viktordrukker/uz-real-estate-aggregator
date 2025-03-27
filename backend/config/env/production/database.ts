@@ -10,7 +10,8 @@ export default ({ env }) => ({
       database: env('DATABASE_NAME', 'strapi'),
       user: env('DATABASE_USERNAME', 'strapi'),
       password: env('DATABASE_PASSWORD'),
-      ssl: env.bool('DATABASE_SSL', false) ? { rejectUnauthorized: false } : false, // Set true for Cloud SQL direct connection
+      // Ensure SSL is true for Supabase connection in production
+      ssl: env.bool('DATABASE_SSL', true) ? { rejectUnauthorized: env.bool('DATABASE_REJECT_UNAUTHORIZED', false) } : false,
     },
     debug: false,
     // Use pool options for production performance
