@@ -1,31 +1,17 @@
 'use client';
 
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useFavorites } from '@/context/FavoritesContext'; // Import useFavorites
+import { useFavorites } from '@/context/FavoritesContext';
 import PropertyCard from '@/components/PropertyCard';
+import PropertyCardSkeleton from '@/components/PropertyCardSkeleton'; // Import skeleton
 import Link from 'next/link';
-import { stringify } from 'qs'; // Import qs for query string generation
+import { stringify } from 'qs';
+import { Property } from '@/types'; // Import shared type
 
-// Define the structure for Property (matching PropertyCard)
-interface Property {
-    id: number;
-    documentId: string;
-    title: string;
-    description?: string | null;
-    price: number;
-    area: number;
-    rooms?: number | null;
-    floor?: number | null;
-    address?: string | null;
-    listingType: 'Buy' | 'Rent';
-    status: 'Available' | 'Sold' | 'Rented';
-    createdAt: string;
-    updatedAt: string;
-    publishedAt?: string | null;
-    // Add other property fields as needed by PropertyCard
-}
-
+// Remove local Property interface definition
 
 export default function FavoritesPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -93,11 +79,24 @@ export default function FavoritesPage() {
   }, [favoriteIds, user, authLoading, favoritesLoading]); // Rerun when favoriteIds or user changes
 
   // Handle combined loading states
-  if (authLoading || favoritesLoading || pageLoading) {
-    return <div className="container mx-auto p-4 text-center">Loading favorites...</div>;
+  const isLoading = authLoading || favoritesLoading || pageLoading;
+
+  if (isLoading) {
+    // Show skeletons based on expected number or a fixed amount
+    const skeletonCount = favoriteIds.size > 0 ? favoriteIds.size : 4; // Show 4 if IDs haven't loaded yet
+    return (
+      <div className="container mx-auto p-4">
+        <h1 className="text-3xl font-bold mb-6">My Favorites</h1>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {Array.from({ length: skeletonCount }).map((_, index) => (
+            <PropertyCardSkeleton key={index} />
+          ))}
+        </div>
+      </div>
+    );
   }
 
-  // Handle not logged in state
+  // Handle not logged in state (after loading is complete)
   if (!user) {
     return (
       <div className="container mx-auto p-4 text-center">
@@ -119,11 +118,15 @@ export default function FavoritesPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {favoriteProperties.map((prop) => (
-            // PropertyCard now gets its 'isFavorited' status directly from useFavorites hook internally
             <PropertyCard
               key={prop.id}
               property={prop}
-              // No need for initialIsFavorited or onRemove here, context handles it
+              // Pass onRemove to instantly update UI when unfavoriting from this page
+              onRemove={() => {
+                // Optimistic UI update: remove immediately from local state
+                setFavoriteProperties(prev => prev.filter(p => p.id !== prop.id));
+                // Actual removal is handled by PropertyCard via context, which will also update favoriteIds
+              }}
             />
           ))}
         </div>
