@@ -98,6 +98,42 @@ This document tracks key technical findings, decisions, and workarounds encounte
 2.  Created `PropertyCardSkeleton.tsx` and `PropertyDetailsSkeleton.tsx` components.
 3.  Integrated skeletons into `page.tsx`, `[documentId]/page.tsx`, and `favorites/page.tsx` to display while data is loading.
 
+**Date:** 2025-03-27
+
+**Topic:** Strapi Admin Panel Errors (Property Type)
+
+**Issue:** Unable to save new or existing `Property` entries via the Content Manager, and unable to modify the `Property` content type via the Content-Type Builder. Both actions result in a 400 Bad Request, sometimes with a "Invalid status: validation error" message, even when the `listingStatus` field (renamed from `status`) is explicitly set. Other collection types (Amenity, Location, Category, Favorite, TestProperty) function correctly in both the Content Manager and Content-Type Builder.
+
+**Investigation:**
+1.  Verified the `Property` schema (`schema.json`) for correct field types, required fields, default values, and relation definitions. The `listingStatus` field has `required: true` and `default: "Available"`.
+2.  Confirmed no custom lifecycle hooks or significant custom logic in the default controller/service for `Property`.
+3.  Temporarily setting `required: false` for `listingStatus` did not resolve the issue.
+4.  Performing a clean build (`rm -rf .tmp build dist node_modules`, `npm install`, `npm run build`) did not resolve the issue.
+5.  Manually creating a similar collection type ("TestProperty") *without* a field named `status` worked correctly, suggesting `status` is a reserved keyword causing conflicts, particularly with `draftAndPublish` enabled. Renaming `status` to `listingStatus` in the original `Property` schema *still* resulted in errors after a clean build.
+
+**Outcome:**
+*   The issue is specific to the `Property` collection type.
+*   The root cause is strongly suspected to be related to the initial manual creation/modification of the `Property` schema files, potentially causing persistent inconsistencies or conflicts with Strapi v5's internal mechanisms or validation, possibly linked to the `draftAndPublish` feature or the originally used `status` field name, even after renaming. Clean builds did not resolve this specific type's issue.
+
+**Next Steps (Deferred):**
+*   Delete the entire `backend/src/api/property` directory.
+*   Manually recreate the `Property` collection type *entirely* through the Admin Panel Content-Type Builder, using `listingStatus` instead of `status`.
+*   Retest saving content and modifying the type.
+*   Update frontend code if the newly generated schema differs significantly.
+
+---
+
+**Date:** 2025-03-27
+
+**Topic:** Loading States (WBS 3.5)
+
+**Enhancement:** Implemented skeleton loading states for a better user experience during data fetching.
+
+**Implementation:**
+1.  Added `react-loading-skeleton` dependency.
+2.  Created `PropertyCardSkeleton.tsx` and `PropertyDetailsSkeleton.tsx` components.
+3.  Integrated skeletons into `page.tsx`, `[documentId]/page.tsx`, and `favorites/page.tsx` to display while data is loading.
+
 **Outcome:** Application now shows placeholder layouts instead of simple text or blank areas during loading, improving perceived performance.
 
 ---

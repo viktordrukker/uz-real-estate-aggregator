@@ -30,7 +30,7 @@
 *   **Backend (Strapi v5.11.3):**
     *   **Installation:** Strapi installed successfully.
     *   **Core Content Types (WBS 2.1):** Schemas defined via files for:
-        *   `Property`: Includes title, description, price, area, rooms, floor, address, listingType, status, images (media), coordinates (json), category (relation), location (relation). *Note: `amenities` relation removed due to seeding issues.*
+        *   `Property`: Includes title, description, price, area, rooms, floor, address, listingType, `listingStatus` (renamed from `status`), images (media), coordinates (json), category (relation), location (relation). *Note: `amenities` relation removed due to seeding issues.*
         *   `Category`: Includes name.
         *   `Location`: Includes name.
         *   `Amenity`: Includes name. *Note: `properties` relation removed due to seeding issues.*
@@ -83,6 +83,7 @@
     *   **Strapi Policy Resolution:** Persistent `Policy ... not found` errors when trying to apply `plugin::users-permissions.isAuthenticated` via route config. **Workaround:** Removed policy config from `favorite.routes.ts`, relying on checks within custom controller actions and frontend filtering.
     *   **Strapi `entityService` Population/FK:** `entityService.findMany('api::favorite.favorite', ...)` failed to return the `property` foreign key ID or populate the relation reliably within the custom controller context. **Workaround:** Used standard REST API (`GET /api/favorites?filters[...]&populate=property`) on the frontend.
     *   **Many-to-Many Seeding (`joinColumn` Error):** Seeding script failed when assigning many-to-many (`amenities`) relation. **Workaround:** Removed amenity assignment from seed data/script. (Still unresolved).
+    *   **Admin Panel Save/Modify Errors (Property Type):** Persistent 400 errors when saving/creating `Property` content or modifying its schema via Content-Type Builder, likely due to conflict with reserved `status` field name (even after renaming to `listingStatus` and clean builds). Other types work correctly. **Next Step:** Delete and recreate `Property` type via Admin Panel.
 *   **Strapi Scripting Issues:**
     *   `strapi exec`: Command not found.
     *   Manual Bootstrap (`node script.js`): Failed (`strapiFactory is not a function`, config loading errors). **Workaround:** Used `strapi console` for seeding.
@@ -94,21 +95,27 @@
 
 ## IV. Remaining WBS Items & Next Steps (High Level):
 
-1.  **Favorites Feature (WBS 2.0):** **DONE** (Core functionality implemented with frontend context).
+1.  **Favorites Feature (WBS 2.0):** **DONE**.
 2.  **Frontend Refinements (WBS 3.0, 4.0):**
     *   Displaying Category/Location names: **DONE**.
     *   Displaying primary Image: **DONE**.
     *   Displaying Image Thumbnails: **DONE**.
     *   Formatting Price: **DONE**.
     *   Formatting Area: **DONE**.
-    *   Improve loading states: **DONE** (Skeleton loaders implemented).
+    *   Improve loading states: **DONE**.
     *   Improve error handling feedback.
     *   Display Amenities (Blocked by seeding issue).
     *   Image Gallery/Multiple Images display on details page.
 3.  **Advanced Filtering (WBS 5.0):** Basic Category/Location/Type filtering implemented. **DONE**. (Further filters like price range, rooms can be added).
 4.  **Pagination (WBS 5.0):** Basic Previous/Next pagination implemented. **DONE**. (Full page number display is a potential enhancement).
 5.  **Map Enhancements:** List view map.
-6.  **Backend:** Customize Admin Panel, add validation.
+6.  **Backend:**
+    *   Customize Admin Panel.
+    *   Add backend validation rules.
+    *   Resolve Many-to-Many Seeding issue for Amenities.
+    *   Resolve Admin Panel save/modify issue for Property type (Deferred - requires recreating type).
+    *   Investigate/resolve Policy resolution errors.
+    *   Investigate/resolve `entityService` population/FK issues (less critical now).
 7.  **CI/CD & Deployment:** PostgreSQL setup, Docker, Pipeline config.
 8.  **Testing & Docs:** Add tests, expand READMEs.
 

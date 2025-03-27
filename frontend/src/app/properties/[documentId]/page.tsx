@@ -1,25 +1,22 @@
-'use client'; // Convert to Client Component
+'use client';
 
-import React, { useState, useEffect } from 'react'; // Keep useState for local loading/error
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import YandexMap from '@/components/YandexMap';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/context/FavoritesContext';
-import { Property, SinglePropertyApiResponse } from '@/types';
-import PropertyDetailsSkeleton from '@/components/PropertyDetailsSkeleton'; // Import skeleton
-
-// Remove local Property interface definition
+import { Property, SinglePropertyApiResponse, StrapiMedia } from '@/types'; // Import StrapiMedia
+import PropertyDetailsSkeleton from '@/components/PropertyDetailsSkeleton';
 
 // Client Component
 export default function PropertyDetailsPage() {
   const params = useParams(); // Get route params
-  // Use property ID (number) for fetching, assuming the route is /properties/[id]
-  // If the route MUST be documentId, we need to adjust fetching logic or route structure
-  const propertyId = params?.documentId as string | undefined; // Keep as string for now, parse later if needed
+  const propertyId = params?.documentId as string | undefined; // Keep as string
 
   const [property, setProperty] = useState<Property | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
   const [pageError, setPageError] = useState<string | null>(null);
+  const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null); // State for main image URL
 
   const { user } = useAuth(); // Only need user status
   const { isFavorited, addFavorite, removeFavorite, isLoading: favoritesLoading } = useFavorites(); // Use context
@@ -40,7 +37,7 @@ export default function PropertyDetailsPage() {
       setPageError(null);
       const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337';
       try {
-        console.log(`[DEBUG] Fetching property with ID: ${propertyId}`); // Log the ID being used
+        console.log(`[DEBUG] Fetching property with ID: ${propertyId}`);
         // Use populate=* for simplicity and to match working curl command
         const res = await fetch(`${strapiUrl}/api/properties/${propertyId}?populate=*`, { cache: 'no-store' });
 
@@ -53,7 +50,17 @@ export default function PropertyDetailsPage() {
           setProperty(null);
         } else {
           const responseData: SinglePropertyApiResponse = await res.json();
-          setProperty(responseData.data || null);
+          const fetchedProperty = responseData.data || null;
+          setProperty(fetchedProperty);
+          // Set initial selected image URL
+          if (fetchedProperty?.images && fetchedProperty.images.length > 0) {
+            const firstImage = fetchedProperty.images[0];
+            setSelectedImageUrl(
+              `${process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'}${firstImage.formats?.medium?.url || firstImage.url}`
+            );
+          } else {
+            setSelectedImageUrl('/placeholder.png'); // Fallback if no images
+          }
         }
       } catch (error: any) {
         console.error(`Error fetching property ${propertyId}:`, error);
@@ -145,12 +152,12 @@ export default function PropertyDetailsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
-          {/* Main Image Display - Use flat access */}
+          {/* Main Image Display - Use state for src */}
           <div className="w-full h-96 bg-gray-200 mb-4 rounded overflow-hidden">
-            {property.images && property.images.length > 0 ? (
+            {selectedImageUrl ? (
               <img
-                src={`${process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'}${property.images[0].formats?.medium?.url || property.images[0].url}`}
-                alt={property.images[0].alternativeText || property.title || 'Property image'}
+                src={selectedImageUrl}
+                alt={property.title || 'Property image'} // Use main title as fallback alt
                 className="w-full h-full object-cover"
                 onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png'; }}
               />
@@ -159,11 +166,20 @@ export default function PropertyDetailsPage() {
             )}
           </div>
 
-          {/* Thumbnail Gallery - Use flat access */}
+          {/* Thumbnail Gallery - Add onClick handler */}
           {property.images && property.images.length > 1 && (
-            <div className="flex space-x-2 mb-4 overflow-x-auto">
-              {property.images.map((image) => ( // image is StrapiMedia
-                <div key={image.id} className="w-20 h-20 flex-shrink-0 bg-gray-200 rounded overflow-hidden">
+            <div className="flex space-x-2 mb-4 overflow-x-auto pb-2"> {/* Add padding-bottom */}
+              {property.images.map((image: StrapiMedia) => {
+                const thumbnailUrl = `${process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'}${image.formats?.thumbnail?.url || image.url}`;
+                const mainImageUrl = `${process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'}${image.formats?.medium?.url || image.url}`;
+                const isSelected = selectedImageUrl === mainImageUrl;
+
+                return (
+                  <div
+                    key={image.id}
+                    className={`w-20 h-20 flex-shrink-0 rounded overflow-hidden cursor-pointer border-2 ${isSelected ? 'border-blue-500' : 'border-transparent'}`}
+                    onClick={() => setSelectedImageUrl(mainImageUrl)}
+                  >
                    <img
                     src={`${process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'}${image.formats?.thumbnail?.url || image.url}`}
                     alt={image.alternativeText || `Thumbnail ${image.id}`}
