@@ -137,3 +137,44 @@ This document tracks key technical findings, decisions, and workarounds encounte
 **Outcome:** Application now shows placeholder layouts instead of simple text or blank areas during loading, improving perceived performance.
 
 ---
+
+**Date:** 2025-03-27
+
+**Topic:** Strapi Admin Panel Errors (Property Type) - Resolution Confirmation
+
+**Issue:** Persistent 400 errors when saving/creating `Property` content or modifying its schema via Content-Type Builder, suspected to be related to the reserved `status` field name.
+
+**Resolution:** Confirmed by Product Manager that the root cause was indeed the conflict with the reserved `status` field name used during initial schema creation (even after renaming it in the schema file later). The issue is considered resolved now that the backend is stable, presumably after ensuring the type uses `listingStatus` and potentially recreating it cleanly via the Admin Panel or resolving internal inconsistencies.
+
+**Decision:** Proceed with development assuming the Property type is stable in the Admin Panel.
+
+---
+
+**Date:** 2025-03-27
+
+**Topic:** Favorites Context Initial Fetch Error
+
+**Issue:** Runtime error "Error: Failed to fetch initial favorites" occurred in `FavoritesContext.tsx` when fetching the user's favorites list upon login/load. The fetch URL used was `/api/favorites?filters[user][id][$eq]=...&populate[property][fields][0]=id`.
+
+**Investigation & Resolution:**
+1.  Verified Authenticated role permissions for `Favorite` (find) and `User` (find/findOne) were correct.
+2.  Modified the fetch query in `FavoritesContext.tsx` to use a simpler population strategy: `populate=property` instead of `populate[property][fields][0]=id`.
+3.  After the code change, the user re-logged in and refreshed the page. The error no longer occurred.
+
+**Outcome:** Fetching initial favorites now works correctly. The issue was likely related to the specific nested field population syntax (`populate[property][fields][0]=id`) or potentially a transient state issue resolved by re-login. Using the simpler `populate=property` is confirmed to work.
+
+**Decision:** Keep the simplified `populate=property` query in `FavoritesContext.tsx`.
+
+---
+
+**IMPORTANT!!! General Project Rules & Notes:**
+
+*   **Initial State:** Assume both backend (Strapi) and frontend (Next.js) servers are initially down. They need to be started manually (e.g., `npm run develop` / `npm run dev`).
+*   **Strapi Version:** This project uses Strapi v5. Be mindful of breaking changes from v4. Refer to official documentation if needed: [https://github.com/strapi/documentation](https://github.com/strapi/documentation) (Git/GH CLI are available).
+*   **Command Chaining:** When chaining commands in `execute_command`, ensure `&&` is used, not `&&`. Double-check commands before execution.
+*   **Troubleshooting Loops:** If encountering persistent errors or loops (e.g., repeated failed attempts at a task), consider refactoring the approach or using alternative tools (like `write_to_file` instead of `replace_in_file` after multiple failures).
+*   **Check VS Code Problems:** Regularly check the "Problems" tab in VS Code for TypeScript or linter errors after modifying files. Address these errors promptly.
+*   **Strapi Reload Time:** Allow sufficient time (e.g., 60+ seconds) for the Strapi server to fully restart after schema changes or significant data operations (like clearing content types) before executing dependent scripts (like seeding). Rushing can lead to race conditions or errors.
+*   **Strapi Modifications:** Prioritize using the Strapi API (REST or GraphQL) for creating, updating, or deleting content and configurations. Only resort to direct code modification (e.g., editing schema files, controllers, services) after exhausting API options, checking documentation, and confirming it's the necessary approach.
+
+---

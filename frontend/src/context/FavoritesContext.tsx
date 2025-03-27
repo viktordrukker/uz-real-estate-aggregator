@@ -32,10 +32,10 @@ export const FavoritesProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     setIsLoading(true);
     const apiUrlBase = process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337';
-    // Fetch favorite entries, filtering by user and populating only the property ID.
+    // Fetch favorite entries, filtering by user and populating the property relation.
     const filterByUser = `filters[user][id][$eq]=${user.id}`;
-    const populatePropertyId = 'populate[property][fields][0]=id'; // Populate only the ID
-    const queryString = `${filterByUser}&${populatePropertyId}`;
+    const populateProperty = 'populate=property'; // Populate the whole property object
+    const queryString = `${filterByUser}&${populateProperty}`;
 
     fetch(`${apiUrlBase}/api/favorites?${queryString}`, {
       headers: { 'Authorization': `Bearer ${jwt}` },

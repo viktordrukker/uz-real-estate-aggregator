@@ -42,7 +42,7 @@ export interface Property {
   category?: { id: number; name: string; } | null; // Assuming flat relation data
   location?: { id: number; name: string; } | null; // Assuming flat relation data
   images?: StrapiMedia[] | null; // Assuming flat array of media objects
-  // TODO: Add amenities later
+  amenities?: { id: number; name: string; }[] | null; // Assuming flat array of amenity objects
   // Removed attributes wrapper
 }
 

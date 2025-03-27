@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react'; // Import useEffect
+import React, { useState, useEffect, useCallback } from 'react'; // Import useEffect and useCallback
 import { useRouter, useSearchParams } from 'next/navigation';
 
 // Define interfaces for fetched data
@@ -21,6 +21,9 @@ const PropertyFilters: React.FC = () => {
   const [listingType, setListingType] = useState(searchParams.get('listingType') || '');
   const [categoryId, setCategoryId] = useState(searchParams.get('categoryId') || '');
   const [locationId, setLocationId] = useState(searchParams.get('locationId') || '');
+  const [minPrice, setMinPrice] = useState(searchParams.get('minPrice') || '');
+  const [maxPrice, setMaxPrice] = useState(searchParams.get('maxPrice') || '');
+  const [minRooms, setMinRooms] = useState(searchParams.get('minRooms') || '');
 
   // State for dropdown options
   const [categories, setCategories] = useState<Category[]>([]);
@@ -58,30 +61,70 @@ const PropertyFilters: React.FC = () => {
     fetchData();
   }, []); // Empty dependency array means run once on mount
 
-  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = e.target;
+  // Debounce function
+  const debounce = (func: (...args: any[]) => void, delay: number) => {
+    let timeoutId: NodeJS.Timeout;
+    return (...args: any[]) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        func(...args);
+      }, delay);
+    };
+  };
 
-    // Update local state
-    if (name === 'listingType') setListingType(value);
-    if (name === 'categoryId') setCategoryId(value);
-    if (name === 'locationId') setLocationId(value);
+  // Function to update URL parameters
+  const updateUrlParams = (updatedFilters: Record<string, string>) => {
+    const currentParams = new URLSearchParams();
+    // Add existing non-empty filters first
+    if (listingType) currentParams.set('listingType', listingType);
+    if (categoryId) currentParams.set('categoryId', categoryId);
+    if (locationId) currentParams.set('locationId', locationId);
+    if (minPrice) currentParams.set('minPrice', minPrice);
+    if (maxPrice) currentParams.set('maxPrice', maxPrice);
+    if (minRooms) currentParams.set('minRooms', minRooms);
 
-    // Update URL
-    const currentParams = new URLSearchParams(Array.from(searchParams.entries()));
-    if (value) {
-      currentParams.set(name, value);
-    } else {
-      currentParams.delete(name); // Remove filter if 'All' is selected
+    // Apply updates from the changed input
+    for (const key in updatedFilters) {
+        if (updatedFilters[key]) {
+            currentParams.set(key, updatedFilters[key]);
+        } else {
+            currentParams.delete(key);
+        }
     }
 
-    // Update URL query parameters without full page reload
+    // Reset page to 1 when filters change
+    currentParams.delete('page');
+
     router.push(`/?${currentParams.toString()}`, { scroll: false });
+  };
+
+  // Debounced version of URL update for text/number inputs
+  const debouncedUpdateUrlParams = useCallback(debounce(updateUrlParams, 500), [listingType, categoryId, locationId, minPrice, maxPrice, minRooms, router]); // Include all state dependencies
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    const updatedFilters = { [name]: value };
+
+    // Update local state immediately
+    if (name === 'listingType') setListingType(value);
+    else if (name === 'categoryId') setCategoryId(value);
+    else if (name === 'locationId') setLocationId(value);
+    else if (name === 'minPrice') setMinPrice(value);
+    else if (name === 'maxPrice') setMaxPrice(value);
+    else if (name === 'minRooms') setMinRooms(value);
+
+    // Update URL immediately for selects, debounce for inputs
+    if (e.target.tagName === 'SELECT') {
+        updateUrlParams(updatedFilters);
+    } else {
+        debouncedUpdateUrlParams(updatedFilters);
+    }
   };
 
   return (
     <div className="mb-6 p-4 border rounded shadow-md bg-white">
       <h2 className="text-xl font-semibold mb-4">Filters</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 items-end"> {/* Adjusted grid columns and alignment */}
         {/* Listing Type Filter */}
         <div>
           <label htmlFor="listingType" className="block text-sm font-medium text-gray-700 mb-1">
@@ -91,10 +134,10 @@ const PropertyFilters: React.FC = () => {
             id="listingType"
             name="listingType"
             value={listingType}
-            onChange={handleFilterChange}
+            onChange={handleInputChange} // Use unified handler
             className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
           >
-            <option value="">All</option>
+            <option value="">All Types</option>
             <option value="Buy">Buy</option>
             <option value="Rent">Rent</option>
           </select>
@@ -107,10 +150,10 @@ const PropertyFilters: React.FC = () => {
           </label>
           <select
             id="locationId"
-            name="locationId" // Use locationId
+            name="locationId"
             value={locationId}
-            onChange={handleFilterChange}
-            disabled={isLoading} // Disable while loading options
+            onChange={handleInputChange} // Use unified handler
+            disabled={isLoading}
             className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md disabled:bg-gray-100 disabled:cursor-not-allowed"
           >
             <option value="">All Locations</option>
@@ -129,10 +172,10 @@ const PropertyFilters: React.FC = () => {
           </label>
           <select
             id="categoryId"
-            name="categoryId" // Use categoryId
+            name="categoryId"
             value={categoryId}
-            onChange={handleFilterChange}
-            disabled={isLoading} // Disable while loading options
+            onChange={handleInputChange} // Use unified handler
+            disabled={isLoading}
             className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md disabled:bg-gray-100 disabled:cursor-not-allowed"
           >
             <option value="">All Categories</option>
@@ -144,7 +187,57 @@ const PropertyFilters: React.FC = () => {
           </select>
         </div>
 
-        {/* TODO: Add Price Range, Rooms etc. filters later */}
+        {/* Min Price Filter */}
+        <div>
+          <label htmlFor="minPrice" className="block text-sm font-medium text-gray-700 mb-1">
+            Min Price (UZS)
+          </label>
+          <input
+            type="number"
+            id="minPrice"
+            name="minPrice"
+            value={minPrice}
+            onChange={handleInputChange} // Use unified handler
+            placeholder="e.g., 50000"
+            min="0"
+            className="mt-1 block w-full pl-3 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+          />
+        </div>
+
+        {/* Max Price Filter */}
+        <div>
+          <label htmlFor="maxPrice" className="block text-sm font-medium text-gray-700 mb-1">
+            Max Price (UZS)
+          </label>
+          <input
+            type="number"
+            id="maxPrice"
+            name="maxPrice"
+            value={maxPrice}
+            onChange={handleInputChange} // Use unified handler
+            placeholder="e.g., 200000"
+            min="0"
+            className="mt-1 block w-full pl-3 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+          />
+        </div>
+
+         {/* Min Rooms Filter */}
+         <div>
+          <label htmlFor="minRooms" className="block text-sm font-medium text-gray-700 mb-1">
+            Min Rooms
+          </label>
+          <input
+            type="number"
+            id="minRooms"
+            name="minRooms"
+            value={minRooms}
+            onChange={handleInputChange} // Use unified handler
+            placeholder="e.g., 2"
+            min="1"
+            step="1"
+            className="mt-1 block w-full pl-3 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+          />
+        </div>
 
       </div>
     </div>

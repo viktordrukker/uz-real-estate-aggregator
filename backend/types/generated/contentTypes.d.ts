@@ -393,6 +393,10 @@ export interface ApiAmenityAmenity extends Struct.CollectionTypeSchema {
     name: Schema.Attribute.String &
       Schema.Attribute.Required &
       Schema.Attribute.Unique;
+    properties: Schema.Attribute.Relation<
+      'manyToMany',
+      'api::property.property'
+    >;
     publishedAt: Schema.Attribute.DateTime;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -524,6 +528,7 @@ export interface ApiPropertyProperty extends Struct.CollectionTypeSchema {
   };
   attributes: {
     address: Schema.Attribute.String;
+    amenities: Schema.Attribute.Relation<'manyToMany', 'api::amenity.amenity'>;
     area: Schema.Attribute.Decimal & Schema.Attribute.Required;
     category: Schema.Attribute.Relation<'manyToOne', 'api::category.category'>;
     coordinates: Schema.Attribute.JSON;

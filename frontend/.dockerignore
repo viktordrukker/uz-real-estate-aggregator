@@ -1,0 +1,24 @@
+# Git files
+.git
+.gitignore
+
+# Node modules (installed within Docker)
+node_modules
+
+# Next.js build output (handled by multi-stage build)
+.next
+
+# Local environment files
+.env*.local
+*.env
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Log files
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

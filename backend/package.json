@@ -15,6 +15,8 @@
     "upgrade:dry": "npx @strapi/upgrade latest --dry"
   },
   "dependencies": {
+    "@3akram/strapi-provider-upload-google-cloud-storage": "^1.2.0",
+    "@strapi-community/strapi-provider-upload-google-cloud-storage": "^4.10.5",
     "@strapi/plugin-cloud": "5.11.3",
     "@strapi/plugin-users-permissions": "5.11.3",
     "@strapi/strapi": "5.11.3",

@@ -8,8 +8,8 @@ This directory contains the Next.js frontend for the application.
 2.  Navigate to this directory (`/mnt/vhd/uz-real-estate-aggregator/frontend`).
 3.  Install dependencies: `npm install`
 4.  Create a `.env.local` file (copy from `.env.example` if it exists) and add necessary environment variables:
-    *   `NEXT_PUBLIC_YANDEX_MAPS_API_KEY`: Your API key for Yandex Maps.
-    *   `STRAPI_URL` (Optional): The URL of the backend Strapi server (defaults to `http://localhost:1337`).
+    *   `NEXT_PUBLIC_YANDEX_MAPS_API_KEY`: Your API key for Yandex Maps (required for both dev and production build).
+    *   `NEXT_PUBLIC_STRAPI_API_URL` (Optional): The URL of the backend Strapi server (defaults to `http://localhost:1337` for dev, should be set to the deployed backend URL for production builds/deployments).
 
 ## Development
 
@@ -39,8 +39,10 @@ npm run start
 
 ## Key Features Implemented
 
-*   Property List display
-*   Property Details display
-*   Basic Listing Type filter
-*   Yandex Map display on details page
-*   Placeholder Login/Register pages
+*   Property List display with pagination and skeleton loading.
+*   Property Details display with image modal, map, and amenities.
+*   Advanced Filtering (Type, Category, Location, Price Range, Min Rooms).
+*   Enhanced Pagination Controls (with page numbers).
+*   List View Map on homepage showing all filtered properties with clickable markers.
+*   User Authentication (Register/Login/Logout) using Context API.
+*   Favorites Management (Add/Remove/View List) using Context API.

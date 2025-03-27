@@ -76,11 +76,66 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
                 <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
               </svg>
             </Link>
-            {/* Current Page (Example, more complex logic needed for full page numbers) */}
-            <span aria-current="page" className="relative z-10 inline-flex items-center bg-indigo-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-              {currentPage}
-            </span>
-             {/* TODO: Add logic to render page numbers dynamically */}
+
+            {/* Page Numbers Logic */}
+            {(() => {
+              const pageNumbers = [];
+              const maxPagesToShow = 5; // Max number of direct page links (excluding first/last/ellipses)
+              const halfMaxPages = Math.floor(maxPagesToShow / 2);
+
+              let startPage = Math.max(1, currentPage - halfMaxPages);
+              let endPage = Math.min(pageCount, currentPage + halfMaxPages);
+
+              // Adjust range if near the beginning or end
+              if (currentPage - halfMaxPages < 1) {
+                endPage = Math.min(pageCount, maxPagesToShow);
+              }
+              if (currentPage + halfMaxPages > pageCount) {
+                startPage = Math.max(1, pageCount - maxPagesToShow + 1);
+              }
+
+              // Always show first page and ellipsis if needed
+              if (startPage > 1) {
+                pageNumbers.push(
+                  <Link key={1} href={createPageURL(1)} className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                    1
+                  </Link>
+                );
+                if (startPage > 2) {
+                  pageNumbers.push(<span key="start-ellipsis" className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300">...</span>);
+                }
+              }
+
+              // Render page numbers in the calculated range
+              for (let i = startPage; i <= endPage; i++) {
+                pageNumbers.push(
+                  i === currentPage ? (
+                    <span key={i} aria-current="page" className="relative z-10 inline-flex items-center bg-indigo-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                      {i}
+                    </span>
+                  ) : (
+                    <Link key={i} href={createPageURL(i)} className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                      {i}
+                    </Link>
+                  )
+                );
+              }
+
+              // Always show last page and ellipsis if needed
+              if (endPage < pageCount) {
+                if (endPage < pageCount - 1) {
+                  pageNumbers.push(<span key="end-ellipsis" className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300">...</span>);
+                }
+                pageNumbers.push(
+                  <Link key={pageCount} href={createPageURL(pageCount)} className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0">
+                    {pageCount}
+                  </Link>
+                );
+              }
+
+              return pageNumbers;
+            })()}
+
             <Link
               href={createPageURL(currentPage + 1)}
               className={`relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
