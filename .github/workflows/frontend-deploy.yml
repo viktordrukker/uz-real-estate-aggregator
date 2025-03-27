@@ -60,10 +60,6 @@ jobs:
         service: ${{ env.SERVICE_NAME }}
         region: ${{ env.GCP_REGION }}
         image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-        # Frontend typically doesn't need runtime secrets if vars are baked in at build time
-        # Add any necessary runtime env vars here if required
-        # env_vars: |-
-        #   SOME_VAR=some_value
 
     - name: Output Cloud Run service URL
       run: echo "Cloud Run service URL: ${{ steps.deploy.outputs.url }}"

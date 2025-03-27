@@ -74,7 +74,6 @@ jobs:
             value: 'true' # Required for Supabase
           - name: GCS_BUCKET_NAME
             value: ${{ secrets.GCS_BUCKET_NAME }}
-          # GCS_SERVICE_ACCOUNT_KEY_JSON is not needed when using WIF and service account roles
           - name: JWT_SECRET
             value: ${{ secrets.JWT_SECRET }}
           - name: ADMIN_JWT_SECRET
