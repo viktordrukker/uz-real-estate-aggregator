@@ -1,10 +1,9 @@
 // Define the structure of a Property based on the actual API response
-// Strapi v5+ often returns a flatter structure by default
 interface Property {
-  id: number; // Keep the numerical ID if needed for keys, etc.
-  documentId: string; // Add the documentId used for API lookups in v5
+  id: number;
+  documentId: string;
   title: string;
-  description?: string | null; // Make optional fields nullable
+  description?: string | null;
   price: number;
   area: number;
   rooms?: number | null;
@@ -15,113 +14,186 @@ interface Property {
   createdAt: string;
   updatedAt: string;
   publishedAt?: string | null;
-  // We'll add relations like category, location, amenities later
-  // Consider moving this interface to a shared types file
+  category?: { id: number; name: string; } | null;
+  location?: { id: number; name: string; } | null;
+  images?: {
+      id: number;
+      name: string;
+      alternativeText?: string | null;
+      caption?: string | null;
+      url: string;
+      formats?: {
+        thumbnail?: { url: string };
+        small?: { url: string };
+        medium?: { url: string };
+        large?: { url: string };
+      } | null;
+    }[] | null;
 }
 
 import PropertyCard from '@/components/PropertyCard';
-import PropertyFilters from '@/components/PropertyFilters'; // Import the filters component
+import PropertyFilters from '@/components/PropertyFilters';
+import PaginationControls from '@/components/PaginationControls'; // Import PaginationControls
+import qs from 'qs';
 
 interface GetPropertiesParams {
-  locationId?: number; // Changed from location name to location ID
   listingType?: 'Buy' | 'Rent';
-  // Add other filters like category, price range etc. later
+  categoryId?: number;
+  locationId?: number;
+  page?: number;
+  pageSize?: number;
 }
 
-// Utility function to introduce a delay
-const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+interface PaginationMetadata {
+  page: number;
+  pageSize: number;
+  pageCount: number;
+  total: number;
+}
 
-// Function to fetch properties from Strapi API, now with filtering
-async function getProperties(params: GetPropertiesParams = {}): Promise<Property[]> {
-  await wait(2000); // Add a 2-second delay for testing loading state
+interface PropertiesApiResponse {
+  properties: Property[];
+  pagination: PaginationMetadata;
+}
 
+// Function to fetch properties with filters and pagination
+async function getProperties(params: GetPropertiesParams = {}): Promise<PropertiesApiResponse> {
   const strapiUrl = process.env.STRAPI_URL || 'http://localhost:1337';
-  const queryParams = new URLSearchParams();
 
-  // Add filters to query parameters
-  // NOTE: Filtering by relation (locationId) seems problematic (400 error), needs investigation.
-  // if (params.locationId) {
-  //   queryParams.append('filters[location][$eq]', String(params.locationId));
-  //   queryParams.append('populate', 'location');
-  // }
-  if (params.listingType) {
-    // Filtering by a direct attribute
-    queryParams.append('filters[listingType][$eq]', params.listingType);
+  const { page = 1, pageSize = 12, ...filtersParams } = params; // Default page 1, pageSize 12
+
+  const query = {
+    filters: {} as any,
+    populate: ['category', 'location', 'images'],
+    pagination: {
+      page,
+      pageSize,
+    },
+    sort: ['createdAt:desc'], // Optional: sort by creation date
+  };
+
+  // Add filters conditionally
+  if (filtersParams.listingType) {
+    query.filters.listingType = { $eq: filtersParams.listingType };
+  }
+  if (filtersParams.categoryId) {
+    query.filters.category = { id: { $eq: filtersParams.categoryId } };
+  }
+  if (filtersParams.locationId) {
+    query.filters.location = { id: { $eq: filtersParams.locationId } };
   }
 
-  // TODO: Add population for other relations if needed for display
+  // Remove filters object if it's empty
+  if (Object.keys(query.filters).length === 0) {
+    delete query.filters;
+  }
 
-  const queryString = queryParams.toString();
-  const apiUrl = `${strapiUrl}/api/properties${queryString ? `?${queryString}` : ''}`;
-  console.log("Fetching properties from:", apiUrl); // Log the final URL
+  const queryString = qs.stringify(query, { encodeValuesOnly: true });
+  const apiUrl = `${strapiUrl}/api/properties?${queryString}`;
+  console.log("Fetching properties from:", apiUrl);
 
   try {
-    // Fetch data from Strapi API endpoint for properties
-    const res = await fetch(apiUrl, { cache: 'no-store' }); // Use no-store for development
-
-    if (!res.ok) {
-      // Throw an error if the response is not successful
-      throw new Error(`Failed to fetch properties: ${res.status} ${res.statusText}`);
-    }
-
+    const res = await fetch(apiUrl, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`Failed to fetch properties: ${res.status} ${res.statusText}`);
     const responseData = await res.json();
-    console.log("Raw API Response:", JSON.stringify(responseData, null, 2)); // Log raw response
-
-    const propertiesData = responseData.data || [];
-    console.log("Extracted Properties Data:", JSON.stringify(propertiesData, null, 2)); // Log extracted data
-
-    // Strapi wraps the data in a 'data' array
-    return propertiesData;
+    return {
+      properties: responseData.data || [],
+      pagination: responseData.meta?.pagination || { page: 1, pageSize, pageCount: 0, total: 0 }
+    };
   } catch (error) {
     console.error("Error fetching properties:", error);
-    // Return an empty array or handle the error as appropriate
-    return [];
+    return { properties: [], pagination: { page: 1, pageSize, pageCount: 0, total: 0 } };
+  }
+}
+
+// Function to fetch the total count of all properties
+async function getTotalPropertyCount(): Promise<number> {
+  const strapiUrl = process.env.STRAPI_URL || 'http://localhost:1337';
+  const query = qs.stringify({ pagination: { pageSize: 1 } }, { encodeValuesOnly: true }); // Fetch only 1 to get metadata
+  const apiUrl = `${strapiUrl}/api/properties?${query}`;
+
+  try {
+    const res = await fetch(apiUrl, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`Failed to fetch total count: ${res.status} ${res.statusText}`);
+    const responseData = await res.json();
+    return responseData.meta?.pagination?.total || 0;
+  } catch (error) {
+    console.error("Error fetching total property count:", error);
+    return 0;
   }
 }
 
 
-// Make the component async to use await for data fetching
-// This page now needs access to searchParams to pass filters
 interface HomePageProps {
   searchParams?: {
     listingType?: 'Buy' | 'Rent';
-    locationId?: string; // Search params are strings
-    // Add other potential search params here
+    categoryId?: string;
+    locationId?: string;
+    page?: string; // Page number from URL
   };
 }
 
 export default async function Home({ searchParams }: HomePageProps) {
-
-  // Ensure searchParams is resolved before accessing its properties
   const resolvedSearchParams = await searchParams;
+  const currentPage = parseInt(resolvedSearchParams?.page || '1', 10);
+  const pageSize = 12; // Or make this configurable
 
-  // Prepare filters based on resolvedSearchParams
-  const filters: GetPropertiesParams = {};
+  const filters: GetPropertiesParams = { page: currentPage, pageSize };
   if (resolvedSearchParams?.listingType) {
     filters.listingType = resolvedSearchParams.listingType;
   }
-  // TODO: Add locationId filter once relational filtering is resolved
-  // if (searchParams?.locationId) {
-  //   filters.locationId = parseInt(searchParams.locationId, 10);
-  // }
+  if (resolvedSearchParams?.categoryId) {
+    const categoryIdNum = parseInt(resolvedSearchParams.categoryId, 10);
+    if (!isNaN(categoryIdNum)) filters.categoryId = categoryIdNum;
+  }
+  if (resolvedSearchParams?.locationId) {
+    const locationIdNum = parseInt(resolvedSearchParams.locationId, 10);
+    if (!isNaN(locationIdNum)) filters.locationId = locationIdNum;
+  }
 
-  // Fetch properties based on current filters
-  const properties = await getProperties(filters);
+  // Fetch properties and total count concurrently
+  const [{ properties, pagination }, totalCount] = await Promise.all([
+    getProperties(filters),
+    getTotalPropertyCount()
+  ]);
 
   return (
     <main className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6">Property Listings</h1>
 
-      <PropertyFilters /> {/* Add the filter component */}
+      <PropertyFilters />
+
+      {/* Display the count */}
+      <p className="mb-4 text-gray-600">
+        Showing {properties.length} properties (Page {pagination.page} of {pagination.pageCount}, Total matching filters: {pagination.total}, Overall total: {totalCount})
+      </p>
 
       {properties.length === 0 ? (
-        <p>No properties found.</p>
+        <p>No properties found matching your criteria.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {properties.map((property) => (
             <PropertyCard key={property.id} property={property} />
           ))}
         </div>
+      )}
+
+      {/* TODO: Add PaginationControls component here */}
+      {/* <PaginationControls
+          currentPage={pagination.page}
+          pageCount={pagination.pageCount}
+          total={pagination.total} // Total matching filters
+          pageSize={pagination.pageSize}
+       /> */}
+
+      {/* Add Pagination Controls if there are multiple pages */}
+      {pagination.pageCount > 1 && (
+        <PaginationControls
+          currentPage={pagination.page}
+          pageCount={pagination.pageCount}
+          total={pagination.total}
+          pageSize={pagination.pageSize}
+        />
       )}
     </main>
   );

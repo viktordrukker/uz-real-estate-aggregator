@@ -23,8 +23,32 @@ interface Property {
   createdAt: string;
   updatedAt: string;
   publishedAt?: string | null;
-  coordinates?: { latitude: number; longitude: number } | null; // Add coordinates type
-  // TODO: Add populated relations (category, location, amenities, images) later
+  coordinates?: { latitude: number; longitude: number } | null;
+  // Define structure for populated relations
+  category?: {
+    id: number;
+    name: string;
+    // Add other category fields if needed
+  } | null;
+  location?: {
+    id: number;
+    name: string;
+    // Add other location fields if needed
+  } | null;
+  images?: { // Use the same StrapiMedia definition as in PropertyCard
+      id: number;
+      name: string;
+      alternativeText?: string | null;
+      caption?: string | null;
+      url: string;
+      formats?: {
+        thumbnail?: { url: string };
+        small?: { url: string };
+        medium?: { url: string };
+        large?: { url: string };
+      } | null;
+    }[] | null;
+  // TODO: Add amenities later
 }
 
 
@@ -167,11 +191,21 @@ export default function PropertyDetailsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
-          {/* Image Placeholder */}
-          {/* Image Placeholder */}
-          <div className="w-full h-96 bg-gray-300 flex items-center justify-center text-gray-500 mb-4 rounded">
-            Image Placeholder
+          {/* Image Display */}
+          <div className="w-full h-96 bg-gray-200 mb-4 rounded overflow-hidden">
+            {property.images && property.images.length > 0 ? (
+              <img
+                // Prefer medium format, fallback to original, then placeholder
+                src={`${process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'}${property.images[0].formats?.medium?.url || property.images[0].url}`}
+                alt={property.images[0].alternativeText || property.title || 'Property image'}
+                className="w-full h-full object-cover"
+                onError={(e) => (e.currentTarget.src = '/placeholder.png')}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-500">No Image Available</div>
+            )}
           </div>
+          {/* TODO: Add gallery for multiple images */}
 
           {/* Map Section */}
           <h2 className="text-2xl font-semibold mt-6 mb-2">Location</h2>
@@ -189,7 +223,8 @@ export default function PropertyDetailsPage() {
         <div className="md:col-span-1 border rounded p-4 shadow-md h-fit">
           <h2 className="text-2xl font-semibold mb-4">Details</h2>
           <p className="text-xl font-medium text-blue-600 mb-3">
-            {property.price.toLocaleString()} UZS
+            {/* Format price */}
+            {property.price.toLocaleString('en-US', { style: 'currency', currency: 'UZS', minimumFractionDigits: 0 })}
           </p>
           <div className="space-y-2 text-gray-700">
             <p><strong>Type:</strong> {property.listingType}</p>
@@ -198,7 +233,10 @@ export default function PropertyDetailsPage() {
             {property.rooms && <p><strong>Rooms:</strong> {property.rooms}</p>}
             {property.floor && <p><strong>Floor:</strong> {property.floor}</p>}
             {property.address && <p><strong>Address:</strong> {property.address}</p>}
-            {/* TODO: Display Category, Location, Amenities */}
+            {/* Display Category and Location */}
+            {property.category && <p><strong>Category:</strong> {property.category.name}</p>}
+            {property.location && <p><strong>Location:</strong> {property.location.name}</p>}
+            {/* TODO: Display Amenities */}
           </div>
         </div>
       </div>

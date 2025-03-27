@@ -52,7 +52,12 @@
     *   **Property Card (WBS 3.2.3):** Dedicated component created (`PropertyCard.tsx`) displaying key property details and linking to details page using `documentId`.
     *   **Property Details Page (WBS 3.2.2):** Dynamic route (`/properties/[documentId]`) created, fetches single property via `/api/properties/:documentId`, displays details. Handles `params` resolution correctly.
     *   **Map Integration (WBS 3.3.1, 3.3.2):** `YandexMap` component created and integrated into the details page, displaying property location via coordinates.
-    *   **Basic Filtering (WBS 3.2.4):** `PropertyFilters` component created (Client Component). Filtering by `listingType` implemented using URL search parameters and updates correctly.
+    *   **Filtering & Pagination (WBS 5.0):**
+        *   `PropertyFilters` component updated to fetch and display Category/Location options.
+        *   Homepage (`page.tsx`) updated to use `qs` library for building filter/populate/pagination query strings.
+        *   Filtering by Listing Type, Category ID, and Location ID implemented and working correctly.
+        *   Basic pagination controls (`PaginationControls.tsx`) added to homepage.
+        *   Homepage displays count of filtered results and overall total properties.
     *   **Loading State (WBS 3.5):** Basic `loading.tsx` implemented for the homepage route group (shows simple text).
     *   **Authentication UI:** Placeholder Login/Register pages created. Basic `LoginForm` and `RegisterForm` components created with UI placeholders for forgot password/social login.
     *   **Authentication Logic:** `AuthContext` and `AuthProvider` created using `localStorage`. Login/Registration API calls implemented in forms, updating context on success. Header UI updates based on login state. Logout implemented.
@@ -74,9 +79,9 @@
 *   **Strapi Plugin/Core Issues (Suspected):**
     *   **`users-permissions` Instability:** Extending the core User model caused fatal startup errors (`Undefined attribute level operator id`). **Workaround:** Removed extension, using dedicated `Favorite` model instead. Favorites feature implementation pending.
     *   **API Token `Create` Permissions (403 Error):** API tokens failed for `POST` requests despite correct permissions. **Workaround:** Used `strapi console` for seeding. Automated seeding via API/script is deferred.
-    *   **Relational Filtering:** Initial report of 400 errors was likely due to incorrect syntax or missing Public permissions. **Resolved:** Confirmed via `curl` that filtering by relation ID (`filters[relation][id]=...`) and nested attributes (`filters[relation][field]=...`) works correctly with the REST API. Advanced filtering (WBS 5.0) is unblocked.
-    *   **Strapi Policy Resolution:** Persistent `Policy ... not found` errors when trying to apply `plugin::users-permissions.isAuthenticated` via route config (both `createCoreRouter` config and explicit `routes` array). **Workaround:** Removed policy config from `favorite.routes.ts`, relying on checks within custom controller actions and frontend filtering. Needs further investigation if stricter route-level policy enforcement is desired.
-    *   **Strapi `entityService` Population/FK:** `entityService.findMany('api::favorite.favorite', ...)` failed to return the `property` foreign key ID or populate the relation reliably within the custom controller context, despite various attempts (`populate: true`, `populate: ['property']`, `fields: ['property']`, explicit populate object). **Workaround:** Switched to using the standard REST API (`GET /api/favorites?filters[...]&populate=property`) on the frontend, which worked correctly after permissions were fixed.
+    *   **Relational Filtering:** Initial report of 400 errors was likely due to incorrect syntax or missing Public permissions. **Resolved:** Confirmed via `curl` and frontend implementation (using `qs`) that filtering by relation ID (`filters[relation][id]=...`) and nested attributes (`filters[relation][field]=...`) works correctly with the REST API.
+    *   **Strapi Policy Resolution:** Persistent `Policy ... not found` errors when trying to apply `plugin::users-permissions.isAuthenticated` via route config. **Workaround:** Removed policy config from `favorite.routes.ts`, relying on checks within custom controller actions and frontend filtering.
+    *   **Strapi `entityService` Population/FK:** `entityService.findMany('api::favorite.favorite', ...)` failed to return the `property` foreign key ID or populate the relation reliably within the custom controller context. **Workaround:** Used standard REST API (`GET /api/favorites?filters[...]&populate=property`) on the frontend.
     *   **Many-to-Many Seeding (`joinColumn` Error):** Seeding script failed when assigning many-to-many (`amenities`) relation. **Workaround:** Removed amenity assignment from seed data/script. (Still unresolved).
 *   **Strapi Scripting Issues:**
     *   `strapi exec`: Command not found.
@@ -91,16 +96,20 @@
 
 1.  **Favorites Feature (WBS 2.0):** **DONE** (Core functionality implemented with frontend context).
 2.  **Frontend Refinements (WBS 3.0, 4.0):**
-    *   Populate/display relations (Category, Location) on cards/details page.
-    *   Implement image display on cards/details page.
-    *   Format price/area data.
+    *   Displaying Category/Location names: **DONE**.
+    *   Displaying primary Image: **DONE**.
+    *   Formatting Price: **DONE**.
+    *   Formatting Area: **DONE** (implicitly via 'sqm' suffix).
     *   Improve loading states (e.g., skeleton loaders).
     *   Improve error handling feedback.
-3.  **Advanced Filtering (WBS 5.0):** Implement UI/logic for filtering by Category, Location, Price, Rooms, etc. (Backend filtering confirmed possible).
-4.  **Map Enhancements:** List view map.
-5.  **Backend:** Customize Admin Panel, add validation.
-6.  **CI/CD & Deployment:** PostgreSQL setup, Docker, Pipeline config.
-7.  **Testing & Docs:** Add tests, expand READMEs.
+    *   Display Amenities (Blocked by seeding issue).
+    *   Image Gallery/Multiple Images display on details page.
+3.  **Advanced Filtering (WBS 5.0):** Basic Category/Location/Type filtering implemented. **DONE**. (Further filters like price range, rooms can be added).
+4.  **Pagination (WBS 5.0):** Basic Previous/Next pagination implemented. **DONE**. (Full page number display is a potential enhancement).
+5.  **Map Enhancements:** List view map.
+6.  **Backend:** Customize Admin Panel, add validation.
+7.  **CI/CD & Deployment:** PostgreSQL setup, Docker, Pipeline config.
+8.  **Testing & Docs:** Add tests, expand READMEs.
 
 ---
 

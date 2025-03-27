@@ -5,8 +5,27 @@ import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/context/FavoritesContext'; // Import useFavorites
 
+// Define the structure for a Strapi Media object (adjust based on your API response)
+interface StrapiMediaFormat {
+  url: string;
+  // Add other format properties if needed (width, height, etc.)
+}
+interface StrapiMedia {
+  id: number;
+  name: string;
+  alternativeText?: string | null;
+  caption?: string | null;
+  url: string; // Default URL
+  formats?: {
+    thumbnail?: StrapiMediaFormat;
+    small?: StrapiMediaFormat;
+    medium?: StrapiMediaFormat;
+    large?: StrapiMediaFormat;
+  } | null;
+  // Add other media fields if needed
+}
+
 // Define the structure of a Property based on the actual API response
-// (Same interface as in page.tsx - consider moving to a shared types file later)
 interface Property {
   id: number; // Keep the numerical ID if needed for keys, etc.
   documentId: string; // Add the documentId used for API lookups in v5
@@ -22,7 +41,11 @@ interface Property {
   createdAt: string;
   updatedAt: string;
   publishedAt?: string | null;
-  // We'll add relations like category, location, amenities later
+  // Add relations to interface
+  category?: { id: number; name: string; } | null;
+  location?: { id: number; name: string; } | null;
+  images?: StrapiMedia[] | null; // Array of media objects
+  // TODO: Add amenities later
 }
 
 interface PropertyCardProps {
@@ -37,10 +60,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, initialIsFavorite
     return null;
   }
 
-  // TODO: Add image display when 'images' relation is populated
-  // const imageUrl = property.images?.data?.[0]?.attributes?.url
-  //   ? `http://localhost:1337${property.images.data[0].attributes.url}`
-  //   : '/placeholder.png'; // Placeholder image path
+  // Get the URL for the primary image (prefer small format, fallback to original)
+  const imageUrl = property.images?.[0]?.formats?.small?.url || property.images?.[0]?.url
+    ? `${process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'}${property.images?.[0]?.formats?.small?.url || property.images?.[0]?.url}`
+    : '/placeholder.png'; // Placeholder image path if no image
 
   const { user } = useAuth(); // Only need user status to show button
   const { isFavorited, addFavorite, removeFavorite, isLoading: favoritesLoading } = useFavorites(); // Use context
@@ -95,27 +118,31 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, initialIsFavorite
         </button>
       )}
 
-      {/* Placeholder for Image */}
-      <div className="w-full h-48 bg-gray-300 flex items-center justify-center text-gray-500">
-        {/* <img src={imageUrl} alt={property.title} className="w-full h-full object-cover"/> */}
-        Image Placeholder
+      {/* Image Display */}
+      <div className="w-full h-48 bg-gray-200">
+        <img
+          src={imageUrl}
+          alt={property.title || 'Property image'}
+          className="w-full h-full object-cover"
+          onError={(e) => (e.currentTarget.src = '/placeholder.png')} // Fallback if image fails to load
+        />
       </div>
       <div className="p-4">
         <h2 className="text-xl font-semibold mb-2 truncate" title={property.title}>
           {property.title}
         </h2>
         <p className="text-lg font-medium text-blue-600 mb-2">
-          {/* TODO: Format price properly */}
-          {property.price.toLocaleString()} UZS
+          {/* Format price */}
+          {property.price.toLocaleString('en-US', { style: 'currency', currency: 'UZS', minimumFractionDigits: 0 })}
         </p>
         <div className="text-sm text-gray-600 space-y-1">
           <p>Type: {property.listingType}</p>
           <p>Area: {property.area} sqm</p>
           {property.rooms && <p>Rooms: {property.rooms}</p>}
           {property.floor && <p>Floor: {property.floor}</p>}
-          {/* TODO: Add Category/Location display when populated */}
-          {/* <p>Category: {property.category?.data?.attributes?.name}</p> */}
-          {/* <p>Location: {property.location?.data?.attributes?.name}</p> */}
+          {/* Display Category and Location */}
+          {property.category && <p>Category: {property.category.name}</p>}
+          {property.location && <p>Location: {property.location.name}</p>}
         </div>
         {/* Link using documentId for Strapi v5 */}
         <Link href={`/properties/${property.documentId}`} className="text-blue-500 hover:underline mt-4 inline-block">
