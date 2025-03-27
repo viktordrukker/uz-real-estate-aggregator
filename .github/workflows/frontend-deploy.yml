@@ -61,4 +61,4 @@ jobs:
         image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
     - name: Output Cloud Run service URL
-      run: echo "Cloud Run service URL: ${{ steps.deploy.outputs.url }}"
+      run: echo "Cloud Run service URL:" ${{ steps.deploy.outputs.url }} # Corrected syntax

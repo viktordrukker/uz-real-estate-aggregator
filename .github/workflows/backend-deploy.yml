@@ -70,4 +70,4 @@ jobs:
           APP_KEYS=${{ secrets.APP_KEYS }}
 
     - name: Output Cloud Run service URL
-      run: echo "Cloud Run service URL: ${{ steps.deploy.outputs.url }}"
+      run: echo "Cloud Run service URL:" ${{ steps.deploy.outputs.url }} # Corrected syntax
