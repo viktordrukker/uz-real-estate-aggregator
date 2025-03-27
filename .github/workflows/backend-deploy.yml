@@ -81,7 +81,6 @@ jobs:
             value: ${{ secrets.API_TOKEN_SALT }}
           - name: APP_KEYS
             value: ${{ secrets.APP_KEYS }}
-          # Add other necessary Strapi env vars here
 
     - name: Output Cloud Run service URL
       run: echo "Cloud Run service URL: ${{ steps.deploy.outputs.url }}"
