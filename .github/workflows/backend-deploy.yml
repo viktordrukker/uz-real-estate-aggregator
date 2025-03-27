@@ -56,29 +56,18 @@ jobs:
         service: ${{ env.SERVICE_NAME }}
         region: ${{ env.GCP_REGION }}
         image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-        secrets:
-          - name: DATABASE_HOST
-            value: ${{ secrets.DATABASE_HOST }}
-          - name: DATABASE_PORT
-            value: '5432'
-          - name: DATABASE_NAME
-            value: ${{ secrets.DATABASE_NAME }}
-          - name: DATABASE_USERNAME
-            value: ${{ secrets.DATABASE_USERNAME }}
-          - name: DATABASE_PASSWORD
-            value: ${{ secrets.DATABASE_PASSWORD }}
-          - name: DATABASE_SSL
-            value: 'true'
-          - name: GCS_BUCKET_NAME
-            value: ${{ secrets.GCS_BUCKET_NAME }}
-          - name: JWT_SECRET
-            value: ${{ secrets.JWT_SECRET }}
-          - name: ADMIN_JWT_SECRET
-            value: ${{ secrets.ADMIN_JWT_SECRET }}
-          - name: API_TOKEN_SALT
-            value: ${{ secrets.API_TOKEN_SALT }}
-          - name: APP_KEYS
-            value: ${{ secrets.APP_KEYS }}
+        secrets: | # Use multi-line string KEY=VALUE format
+          DATABASE_HOST=${{ secrets.DATABASE_HOST }}
+          DATABASE_PORT=5432
+          DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+          DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
+          DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+          DATABASE_SSL=true
+          GCS_BUCKET_NAME=${{ secrets.GCS_BUCKET_NAME }}
+          JWT_SECRET=${{ secrets.JWT_SECRET }}
+          ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }}
+          API_TOKEN_SALT=${{ secrets.API_TOKEN_SALT }}
+          APP_KEYS=${{ secrets.APP_KEYS }}
 
     - name: Output Cloud Run service URL
       run: echo "Cloud Run service URL: ${{ steps.deploy.outputs.url }}"
