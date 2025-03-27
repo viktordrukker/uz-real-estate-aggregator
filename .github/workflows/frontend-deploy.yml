@@ -8,9 +8,9 @@ on:
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  GCP_REGION: 'YOUR_GCP_REGION' # TODO: Replace with your GCP region (e.g., asia-southeast1)
-  ARTIFACT_REGISTRY_REPO: 'uz-rea-frontend-repo' # TODO: Replace with your Artifact Registry repo name if different
-  SERVICE_NAME: 'uz-rea-frontend' # TODO: Replace with your Cloud Run service name
+  GCP_REGION: 'europe-west1'
+  ARTIFACT_REGISTRY_REPO: 'uz-rea-frontend-repo'
+  SERVICE_NAME: 'uz-rea-frontend'
   IMAGE_NAME: frontend-image
 
 jobs:

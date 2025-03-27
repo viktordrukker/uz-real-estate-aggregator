@@ -8,9 +8,9 @@ on:
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  GCP_REGION: 'YOUR_GCP_REGION' # TODO: Replace with your GCP region (e.g., asia-southeast1)
-  ARTIFACT_REGISTRY_REPO: 'uz-rea-backend-repo' # TODO: Replace with your Artifact Registry repo name if different
-  SERVICE_NAME: 'uz-rea-backend' # TODO: Replace with your Cloud Run service name
+  GCP_REGION: 'europe-west1'
+  ARTIFACT_REGISTRY_REPO: 'uz-rea-backend-repo'
+  SERVICE_NAME: 'uz-rea-backend'
   IMAGE_NAME: backend-image
 
 jobs:
@@ -71,11 +71,10 @@ jobs:
           - name: DATABASE_PASSWORD
             value: ${{ secrets.DATABASE_PASSWORD }}
           - name: DATABASE_SSL
-            value: 'true' # Adjust if needed
+            value: 'true' # Required for Supabase
           - name: GCS_BUCKET_NAME
             value: ${{ secrets.GCS_BUCKET_NAME }}
-          - name: GCS_SERVICE_ACCOUNT_KEY_JSON
-            value: ${{ secrets.GCS_SERVICE_ACCOUNT_KEY_JSON }} # If using this method
+          # GCS_SERVICE_ACCOUNT_KEY_JSON is not needed when using WIF and service account roles
           - name: JWT_SECRET
             value: ${{ secrets.JWT_SECRET }}
           - name: ADMIN_JWT_SECRET
