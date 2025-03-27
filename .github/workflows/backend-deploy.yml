@@ -2,7 +2,7 @@ name: Deploy Strapi Backend to Cloud Run
 
 on:
   push:
-    branches: [ main ] # Trigger on pushes to the main branch
+    branches: [main] # Trigger on pushes to the main branch
     paths:
       - 'uz-real-estate-aggregator/backend/**' # Only run if backend code changes
 
@@ -28,7 +28,7 @@ jobs:
     - name: Authenticate to Google Cloud
       id: auth
       uses: 'google-github-actions/auth@v2'
-      with:
+      with: # Indented 6 spaces
         # Option 1: Workload Identity Federation (Recommended)
         workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
         service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
@@ -53,13 +53,12 @@ jobs:
     - name: Deploy to Cloud Run
       id: deploy
       uses: 'google-github-actions/deploy-cloudrun@v2'
-      with:
+      with: # Indented 6 spaces
         service: ${{ env.SERVICE_NAME }}
         region: ${{ env.GCP_REGION }}
         image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-        # Pass production environment variables as secrets
-        secrets:
-          - name: DATABASE_HOST
+        secrets: # Indented 8 spaces
+          - name: DATABASE_HOST # Indented 10 spaces
             value: ${{ secrets.DATABASE_HOST }}
           - name: DATABASE_PORT
             value: '5432' # Or use secret if different
