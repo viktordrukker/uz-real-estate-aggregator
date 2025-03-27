@@ -13,13 +13,14 @@ interface PropertyCardProps {
 }
 
 const PropertyCard: React.FC<PropertyCardProps> = ({ property, initialIsFavorited = false, onRemove }) => {
-  // Basic check in case property data is somehow incomplete
+  // Basic check using flat structure
   if (!property || !property.title) {
+    console.warn("PropertyCard received invalid property data:", property);
     return null;
   }
 
-  // Get the URL for the primary image using the correct Strapi v5 structure
-  const firstImage = property.attributes.images?.data?.[0]?.attributes;
+  // Get the URL for the primary image (using flat structure)
+  const firstImage = property.images?.[0];
   const imageUrl = firstImage
     ? `${process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'}${firstImage.formats?.small?.url || firstImage.url}`
     : '/placeholder.png';
@@ -82,29 +83,28 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, initialIsFavorite
       <div className="w-full h-48 bg-gray-200">
         <img
           src={imageUrl}
-          alt={firstImage?.alternativeText || property.attributes.title || 'Property image'} // Use alt text or title
+          alt={firstImage?.alternativeText || property.title || 'Property image'}
           className="w-full h-full object-cover"
           onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png'; }}
         />
       </div>
       <div className="p-4">
-        <h2 className="text-xl font-semibold mb-2 truncate" title={property.attributes.title}>
-          {property.attributes.title}
+        <h2 className="text-xl font-semibold mb-2 truncate" title={property.title}>
+          {property.title}
         </h2>
         <p className="text-lg font-medium text-blue-600 mb-2">
-          {property.attributes.price.toLocaleString('en-US', { style: 'currency', currency: 'UZS', minimumFractionDigits: 0 })}
+          {property.price.toLocaleString('en-US', { style: 'currency', currency: 'UZS', minimumFractionDigits: 0 })}
         </p>
         <div className="text-sm text-gray-600 space-y-1">
-          <p>Type: {property.attributes.listingType}</p>
-          <p>Area: {property.attributes.area} sqm</p>
-          {property.attributes.rooms && <p>Rooms: {property.attributes.rooms}</p>}
-          {property.attributes.floor && <p>Floor: {property.attributes.floor}</p>}
-          {/* Access relations via attributes.relation.data.attributes */}
-          {property.attributes.category?.data && <p>Category: {property.attributes.category.data.attributes.name}</p>}
-          {property.attributes.location?.data && <p>Location: {property.attributes.location.data.attributes.name}</p>}
+          <p>Type: {property.listingType}</p>
+          <p>Area: {property.area} sqm</p>
+          {property.rooms && <p>Rooms: {property.rooms}</p>}
+          {property.floor && <p>Floor: {property.floor}</p>}
+          {property.category && <p>Category: {property.category.name}</p>}
+          {property.location && <p>Location: {property.location.name}</p>}
         </div>
-        {/* Link using numeric id for consistency, assuming route handles it or adjust route later */}
-        <Link href={`/properties/${property.id}`} className="text-blue-500 hover:underline mt-4 inline-block">
+        {/* Link using documentId */}
+        <Link href={`/properties/${property.documentId}`} className="text-blue-500 hover:underline mt-4 inline-block">
           View Details
         </Link>
         {error && <p className="text-red-500 text-xs mt-1">{error}</p>}

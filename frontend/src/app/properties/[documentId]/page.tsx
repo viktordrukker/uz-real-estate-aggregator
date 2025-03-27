@@ -12,7 +12,9 @@ import { Property, SinglePropertyApiResponse } from '@/types'; // Import shared 
 // Client Component
 export default function PropertyDetailsPage() {
   const params = useParams(); // Get route params
-  const documentId = params?.documentId as string | undefined; // Extract documentId
+  // Use property ID (number) for fetching, assuming the route is /properties/[id]
+  // If the route MUST be documentId, we need to adjust fetching logic or route structure
+  const propertyId = params?.documentId as string | undefined; // Keep as string for now, parse later if needed
 
   const [property, setProperty] = useState<Property | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
@@ -24,9 +26,9 @@ export default function PropertyDetailsPage() {
   const [localLoading, setLocalLoading] = useState(false); // Local loading state for button press
   const [favError, setFavError] = useState<string | null>(null); // Keep local error state for fav button
 
-  // Effect to fetch property data (initial favorite status is now handled by context)
+  // Effect to fetch property data
   useEffect(() => {
-    if (!documentId) {
+    if (!propertyId) {
       setPageError("Property ID not found in URL.");
       setPageLoading(false);
       return;
@@ -35,25 +37,25 @@ export default function PropertyDetailsPage() {
     const fetchProperty = async () => {
       setPageLoading(true);
       setPageError(null);
-      const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'; // Use NEXT_PUBLIC_ prefix
+      const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337';
       try {
-        // Populate all relations needed
-        const res = await fetch(`${strapiUrl}/api/properties/${documentId}?populate[category]=*&populate[location]=*&populate[images]=*`, { cache: 'no-store' });
+        console.log(`[DEBUG] Fetching property with ID: ${propertyId}`); // Log the ID being used
+        // Use populate=* for simplicity and to match working curl command
+        const res = await fetch(`${strapiUrl}/api/properties/${propertyId}?populate=*`, { cache: 'no-store' });
 
         if (!res.ok) {
           if (res.status === 404) {
             setPageError('Property not found.');
           } else {
-            throw new Error(`Failed to fetch property ${documentId}: ${res.status} ${res.statusText}`);
+            throw new Error(`Failed to fetch property ${propertyId}: ${res.status} ${res.statusText}`);
           }
           setProperty(null);
         } else {
-          // Use SinglePropertyApiResponse for type safety
           const responseData: SinglePropertyApiResponse = await res.json();
           setProperty(responseData.data || null);
         }
       } catch (error: any) {
-        console.error(`Error fetching property ${documentId}:`, error);
+        console.error(`Error fetching property ${propertyId}:`, error);
         setPageError(error.message || 'Failed to load property data.');
         setProperty(null);
       } finally {
@@ -62,7 +64,7 @@ export default function PropertyDetailsPage() {
     };
 
     fetchProperty();
-  }, [documentId]); // Only depends on documentId now
+  }, [propertyId]);
 
   // Favorite toggle handler using context functions
   const handleFavoriteToggle = async () => {
@@ -101,18 +103,17 @@ export default function PropertyDetailsPage() {
 
   // Render property not found
   if (!property) {
-    // This case might be redundant if pageError handles 404, but good for clarity
     return <div className="container mx-auto p-4 text-center">Property not found.</div>;
   }
 
   // --- Render actual page content ---
 
-  // Access data via property.attributes
+  // Access data directly (flat structure)
   let mapCenter: [number, number] | undefined;
   let placemarkCoords: [number, number] | undefined;
   try {
-    if (property.attributes.coordinates?.latitude && property.attributes.coordinates?.longitude) {
-      mapCenter = [property.attributes.coordinates.latitude, property.attributes.coordinates.longitude];
+    if (property.coordinates?.latitude && property.coordinates?.longitude) { // Use flat access
+      mapCenter = [property.coordinates.latitude, property.coordinates.longitude];
       placemarkCoords = mapCenter;
     }
   } catch (e) {
@@ -123,7 +124,7 @@ export default function PropertyDetailsPage() {
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-start mb-4">
-        <h1 className="text-3xl font-bold">{property.attributes.title}</h1>
+        <h1 className="text-3xl font-bold">{property.title}</h1> {/* Use flat access */}
         {user && (
           <button
             onClick={handleFavoriteToggle}
@@ -143,12 +144,12 @@ export default function PropertyDetailsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
-          {/* Main Image Display */}
+          {/* Main Image Display - Use flat access */}
           <div className="w-full h-96 bg-gray-200 mb-4 rounded overflow-hidden">
-            {property.attributes.images?.data && property.attributes.images.data.length > 0 ? (
+            {property.images && property.images.length > 0 ? (
               <img
-                src={`${process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'}${property.attributes.images.data[0].attributes.formats?.medium?.url || property.attributes.images.data[0].attributes.url}`}
-                alt={property.attributes.images.data[0].attributes.alternativeText || property.attributes.title || 'Property image'}
+                src={`${process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'}${property.images[0].formats?.medium?.url || property.images[0].url}`}
+                alt={property.images[0].alternativeText || property.title || 'Property image'}
                 className="w-full h-full object-cover"
                 onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png'; }}
               />
@@ -157,14 +158,14 @@ export default function PropertyDetailsPage() {
             )}
           </div>
 
-          {/* Thumbnail Gallery */}
-          {property.attributes.images?.data && property.attributes.images.data.length > 1 && (
+          {/* Thumbnail Gallery - Use flat access */}
+          {property.images && property.images.length > 1 && (
             <div className="flex space-x-2 mb-4 overflow-x-auto">
-              {property.attributes.images.data.map((image) => (
+              {property.images.map((image) => ( // image is StrapiMedia
                 <div key={image.id} className="w-20 h-20 flex-shrink-0 bg-gray-200 rounded overflow-hidden">
                    <img
-                    src={`${process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'}${image.attributes.formats?.thumbnail?.url || image.attributes.url}`}
-                    alt={image.attributes.alternativeText || `Thumbnail ${image.id}`}
+                    src={`${process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'}${image.formats?.thumbnail?.url || image.url}`}
+                    alt={image.alternativeText || `Thumbnail ${image.id}`}
                     className="w-full h-full object-cover"
                     onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png'; }}
                   />
@@ -183,23 +184,24 @@ export default function PropertyDetailsPage() {
 
           <h2 className="text-2xl font-semibold mt-6 mb-2">Description</h2>
           <p className="text-gray-700 whitespace-pre-wrap">
-            {property.attributes.description || 'No description available.'}
+            {property.description || 'No description available.'} {/* Use flat access */}
           </p>
         </div>
         <div className="md:col-span-1 border rounded p-4 shadow-md h-fit">
           <h2 className="text-2xl font-semibold mb-4">Details</h2>
           <p className="text-xl font-medium text-blue-600 mb-3">
-            {property.attributes.price.toLocaleString('en-US', { style: 'currency', currency: 'UZS', minimumFractionDigits: 0 })}
+            {property.price.toLocaleString('en-US', { style: 'currency', currency: 'UZS', minimumFractionDigits: 0 })} {/* Use flat access */}
           </p>
           <div className="space-y-2 text-gray-700">
-            <p><strong>Type:</strong> {property.attributes.listingType}</p>
-            <p><strong>Status:</strong> {property.attributes.status}</p>
-            <p><strong>Area:</strong> {property.attributes.area} sqm</p>
-            {property.attributes.rooms && <p><strong>Rooms:</strong> {property.attributes.rooms}</p>}
-            {property.attributes.floor && <p><strong>Floor:</strong> {property.attributes.floor}</p>}
-            {property.attributes.address && <p><strong>Address:</strong> {property.attributes.address}</p>}
-            {property.attributes.category?.data && <p><strong>Category:</strong> {property.attributes.category.data.attributes.name}</p>}
-            {property.attributes.location?.data && <p><strong>Location:</strong> {property.attributes.location.data.attributes.name}</p>}
+            <p><strong>Type:</strong> {property.listingType}</p> {/* Use flat access */}
+            <p><strong>Status:</strong> {property.status}</p> {/* Use flat access */}
+            <p><strong>Area:</strong> {property.area} sqm</p> {/* Use flat access */}
+            {property.rooms && <p><strong>Rooms:</strong> {property.rooms}</p>} {/* Use flat access */}
+            {property.floor && <p><strong>Floor:</strong> {property.floor}</p>} {/* Use flat access */}
+            {property.address && <p><strong>Address:</strong> {property.address}</p>} {/* Use flat access */}
+            {/* Access relations directly */}
+            {property.category && <p><strong>Category:</strong> {property.category.name}</p>}
+            {property.location && <p><strong>Location:</strong> {property.location.name}</p>}
             {/* TODO: Display Amenities */}
           </div>
         </div>

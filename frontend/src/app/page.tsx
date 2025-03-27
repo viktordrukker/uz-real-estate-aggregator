@@ -4,7 +4,7 @@ import PaginationControls from '@/components/PaginationControls';
 import qs from 'qs';
 import { Property, PropertiesApiResponse } from '@/types'; // Import shared types
 
-// Remove local Property interface definition (already done in previous step, ensuring it's gone)
+// Remove local Property interface definition
 
 interface GetPropertiesParams {
   listingType?: 'Buy' | 'Rent';
