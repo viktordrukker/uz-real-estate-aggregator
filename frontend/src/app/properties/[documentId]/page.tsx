@@ -5,7 +5,8 @@ import { useParams } from 'next/navigation';
 import YandexMap from '@/components/YandexMap';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/context/FavoritesContext';
-import { Property, SinglePropertyApiResponse } from '@/types'; // Import shared types
+import { Property, SinglePropertyApiResponse } from '@/types';
+import PropertyDetailsSkeleton from '@/components/PropertyDetailsSkeleton'; // Import skeleton
 
 // Remove local Property interface definition
 
@@ -91,9 +92,9 @@ export default function PropertyDetailsPage() {
   // Determine combined loading state
   const isLoading = localLoading || favoritesLoading;
 
-  // Render loading state
+  // Render loading state using skeleton
   if (pageLoading) {
-    return <div className="container mx-auto p-4 text-center">Loading property details...</div>;
+    return <PropertyDetailsSkeleton />;
   }
 
   // Render error state

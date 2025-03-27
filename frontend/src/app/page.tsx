@@ -1,8 +1,9 @@
 import PropertyCard from '@/components/PropertyCard';
 import PropertyFilters from '@/components/PropertyFilters';
 import PaginationControls from '@/components/PaginationControls';
+import PropertyCardSkeleton from '@/components/PropertyCardSkeleton'; // Import skeleton
 import qs from 'qs';
-import { Property, PropertiesApiResponse } from '@/types'; // Import shared types
+import { Property, PropertiesApiResponse } from '@/types';
 
 // Remove local Property interface definition
 
@@ -116,10 +117,17 @@ export default async function Home({ searchParams }: HomePageProps) {
     if (!isNaN(locationIdNum)) filters.locationId = locationIdNum;
   }
 
-  const [{ properties, pagination }, totalCount] = await Promise.all([
-    getProperties(filters),
-    getTotalPropertyCount()
-  ]);
+  // Fetch properties and total count concurrently
+  // We need a way to handle loading state for server components.
+  // Next.js Suspense is the idiomatic way, but requires restructuring.
+  // For now, we'll fetch and pass loading state down, though this isn't ideal for RSC.
+  // A better approach would involve Suspense boundaries.
+
+  // Let's simulate loading for now to test skeleton
+  const loading = false; // Set to true to test skeleton
+  const { properties, pagination } = loading ? { properties: [], pagination: { page: 1, pageSize: 12, pageCount: 0, total: 0 } } : await getProperties(filters);
+  const totalCount = loading ? 0 : await getTotalPropertyCount();
+
 
   return (
     <main className="container mx-auto p-4">
@@ -128,7 +136,15 @@ export default async function Home({ searchParams }: HomePageProps) {
       <p className="mb-4 text-gray-600">
         Showing {properties.length} properties (Page {pagination.page} of {pagination.pageCount}, Total matching filters: {pagination.total}, Overall total: {totalCount})
       </p>
-      {properties.length === 0 ? (
+      {/* Conditional rendering based on loading state */}
+      {loading ? (
+         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+           {/* Render multiple skeletons */}
+           {Array.from({ length: pageSize }).map((_, index) => (
+             <PropertyCardSkeleton key={index} />
+           ))}
+         </div>
+      ) : properties.length === 0 ? (
         <p>No properties found matching your criteria.</p>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -137,7 +153,9 @@ export default async function Home({ searchParams }: HomePageProps) {
           ))}
         </div>
       )}
-      {pagination.pageCount > 1 && (
+
+      {/* Only show pagination if not loading and there are multiple pages */}
+      {!loading && pagination.pageCount > 1 && (
         <PaginationControls
           currentPage={pagination.page}
           pageCount={pagination.pageCount}
