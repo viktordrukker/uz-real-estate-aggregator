@@ -2,6 +2,8 @@
 
 This directory contains the Strapi CMS backend for the application.
 
+# Test trigger
+
 ## Setup
 
 1.  Ensure Node.js (LTS recommended, check `.nvmrc` if available) and npm are installed.
