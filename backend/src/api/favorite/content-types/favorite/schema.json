@@ -1,26 +1,26 @@
 {
-      "kind": "collectionType",
-      "collectionName": "favorites",
-      "info": {
-        "singularName": "favorite",
-        "pluralName": "favorites",
-        "displayName": "Favorite",
-        "description": "Links users to their favorited properties"
-      },
-      "options": {
-        "draftAndPublish": false
-      },
-      "pluginOptions": {},
-      "attributes": {
-        "user": {
-          "type": "relation",
-          "relation": "manyToOne",
-          "target": "plugin::users-permissions.user"
-        },
-        "property": {
-          "type": "relation",
-          "relation": "manyToOne",
-          "target": "api::property.property"
-        }
-      }
+  "kind": "collectionType",
+  "collectionName": "favorites",
+  "info": {
+    "singularName": "favorite",
+    "pluralName": "favorites",
+    "displayName": "Favorite",
+    "description": "Links users to their favorited properties"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "user": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "property": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::property.property"
     }
+  }
+}

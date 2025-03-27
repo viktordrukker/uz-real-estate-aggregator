@@ -1,31 +1,26 @@
 {
   "kind": "collectionType",
-  "collectionName": "properties",
+  "collectionName": "test_properties",
   "info": {
-    "singularName": "property",
-    "pluralName": "properties",
-    "displayName": "Property",
-    "description": ""
+    "singularName": "test-property",
+    "pluralName": "test-properties",
+    "displayName": "TestProperty"
   },
   "options": {
     "draftAndPublish": true
   },
-  "pluginOptions": {},
   "attributes": {
     "title": {
-      "type": "string",
-      "required": true
+      "type": "string"
     },
     "description": {
       "type": "text"
     },
-    "price": {
-      "type": "decimal",
-      "required": true
+    "Price": {
+      "type": "biginteger"
     },
     "area": {
-      "type": "decimal",
-      "required": true
+      "type": "integer"
     },
     "rooms": {
       "type": "integer"
@@ -34,34 +29,32 @@
       "type": "integer"
     },
     "address": {
-      "type": "string"
+      "type": "text"
     },
     "listingType": {
       "type": "enumeration",
       "enum": [
         "Buy",
         "Rent"
-      ],
-      "required": true
+      ]
     },
-    "listingStatus": {
+    "ListingStatus": {
       "type": "enumeration",
       "enum": [
         "Available",
         "Sold",
         "Rented"
-      ],
-      "default": "Available",
-      "required": true
+      ]
     },
     "images": {
-      "type": "media",
-      "multiple": true,
-      "required": false,
       "allowedTypes": [
         "images",
-        "videos"
-      ]
+        "files",
+        "videos",
+        "audios"
+      ],
+      "type": "media",
+      "multiple": true
     },
     "coordinates": {
       "type": "json"
@@ -70,13 +63,13 @@
       "type": "relation",
       "relation": "manyToOne",
       "target": "api::category.category",
-      "inversedBy": "properties"
+      "inversedBy": "test_properties"
     },
     "location": {
       "type": "relation",
       "relation": "manyToOne",
       "target": "api::location.location",
-      "inversedBy": "properties"
+      "inversedBy": "test_properties"
     }
   }
 }

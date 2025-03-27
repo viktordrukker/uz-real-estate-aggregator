@@ -22,6 +22,12 @@
       "relation": "oneToMany",
       "target": "api::property.property",
       "mappedBy": "location"
+    },
+    "test_properties": {
+      "type": "relation",
+      "relation": "oneToMany",
+      "target": "api::test-property.test-property",
+      "mappedBy": "location"
     }
   }
 }

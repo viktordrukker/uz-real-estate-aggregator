@@ -429,6 +429,10 @@ export interface ApiCategoryCategory extends Struct.CollectionTypeSchema {
       'api::property.property'
     >;
     publishedAt: Schema.Attribute.DateTime;
+    test_properties: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::test-property.test-property'
+    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -497,6 +501,10 @@ export interface ApiLocationLocation extends Struct.CollectionTypeSchema {
       'api::property.property'
     >;
     publishedAt: Schema.Attribute.DateTime;
+    test_properties: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::test-property.test-property'
+    >;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -525,6 +533,11 @@ export interface ApiPropertyProperty extends Struct.CollectionTypeSchema {
     description: Schema.Attribute.Text;
     floor: Schema.Attribute.Integer;
     images: Schema.Attribute.Media<'images' | 'videos', true>;
+    listingStatus: Schema.Attribute.Enumeration<
+      ['Available', 'Sold', 'Rented']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'Available'>;
     listingType: Schema.Attribute.Enumeration<['Buy', 'Rent']> &
       Schema.Attribute.Required;
     locale: Schema.Attribute.String & Schema.Attribute.Private;
@@ -537,10 +550,53 @@ export interface ApiPropertyProperty extends Struct.CollectionTypeSchema {
     price: Schema.Attribute.Decimal & Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
     rooms: Schema.Attribute.Integer;
-    status: Schema.Attribute.Enumeration<['Available', 'Sold', 'Rented']> &
-      Schema.Attribute.Required &
-      Schema.Attribute.DefaultTo<'Available'>;
     title: Schema.Attribute.String & Schema.Attribute.Required;
+    updatedAt: Schema.Attribute.DateTime;
+    updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+  };
+}
+
+export interface ApiTestPropertyTestProperty
+  extends Struct.CollectionTypeSchema {
+  collectionName: 'test_properties';
+  info: {
+    displayName: 'TestProperty';
+    pluralName: 'test-properties';
+    singularName: 'test-property';
+  };
+  options: {
+    draftAndPublish: true;
+  };
+  attributes: {
+    address: Schema.Attribute.Text;
+    area: Schema.Attribute.Integer;
+    category: Schema.Attribute.Relation<'manyToOne', 'api::category.category'>;
+    coordinates: Schema.Attribute.JSON;
+    createdAt: Schema.Attribute.DateTime;
+    createdBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
+      Schema.Attribute.Private;
+    description: Schema.Attribute.Text;
+    floor: Schema.Attribute.Integer;
+    images: Schema.Attribute.Media<
+      'images' | 'files' | 'videos' | 'audios',
+      true
+    >;
+    ListingStatus: Schema.Attribute.Enumeration<
+      ['Available', 'Sold', 'Rented']
+    >;
+    listingType: Schema.Attribute.Enumeration<['Buy', 'Rent']>;
+    locale: Schema.Attribute.String & Schema.Attribute.Private;
+    localizations: Schema.Attribute.Relation<
+      'oneToMany',
+      'api::test-property.test-property'
+    > &
+      Schema.Attribute.Private;
+    location: Schema.Attribute.Relation<'manyToOne', 'api::location.location'>;
+    Price: Schema.Attribute.BigInteger;
+    publishedAt: Schema.Attribute.DateTime;
+    rooms: Schema.Attribute.Integer;
+    title: Schema.Attribute.String;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
       Schema.Attribute.Private;
@@ -1061,6 +1117,7 @@ declare module '@strapi/strapi' {
       'api::favorite.favorite': ApiFavoriteFavorite;
       'api::location.location': ApiLocationLocation;
       'api::property.property': ApiPropertyProperty;
+      'api::test-property.test-property': ApiTestPropertyTestProperty;
       'plugin::content-releases.release': PluginContentReleasesRelease;
       'plugin::content-releases.release-action': PluginContentReleasesReleaseAction;
       'plugin::i18n.locale': PluginI18NLocale;

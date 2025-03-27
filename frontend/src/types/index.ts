@@ -33,7 +33,7 @@ export interface Property {
   floor?: number | null;
   address?: string | null;
   listingType: 'Buy' | 'Rent';
-  status: 'Available' | 'Sold' | 'Rented';
+  listingStatus: 'Available' | 'Sold' | 'Rented'; // Renamed from status
   createdAt: string;
   updatedAt: string;
   publishedAt?: string | null;

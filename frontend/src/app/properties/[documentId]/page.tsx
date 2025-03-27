@@ -194,10 +194,10 @@ export default function PropertyDetailsPage() {
             {property.price.toLocaleString('en-US', { style: 'currency', currency: 'UZS', minimumFractionDigits: 0 })} {/* Use flat access */}
           </p>
           <div className="space-y-2 text-gray-700">
-            <p><strong>Type:</strong> {property.listingType}</p> {/* Use flat access */}
-            <p><strong>Status:</strong> {property.status}</p> {/* Use flat access */}
-            <p><strong>Area:</strong> {property.area} sqm</p> {/* Use flat access */}
-            {property.rooms && <p><strong>Rooms:</strong> {property.rooms}</p>} {/* Use flat access */}
+            <p><strong>Type:</strong> {property.listingType}</p>
+            <p><strong>Status:</strong> {property.listingStatus}</p> {/* Use listingStatus */}
+            <p><strong>Area:</strong> {property.area} sqm</p>
+            {property.rooms && <p><strong>Rooms:</strong> {property.rooms}</p>}
             {property.floor && <p><strong>Floor:</strong> {property.floor}</p>} {/* Use flat access */}
             {property.address && <p><strong>Address:</strong> {property.address}</p>} {/* Use flat access */}
             {/* Access relations directly */}

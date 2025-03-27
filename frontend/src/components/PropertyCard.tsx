@@ -97,6 +97,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, initialIsFavorite
         </p>
         <div className="text-sm text-gray-600 space-y-1">
           <p>Type: {property.listingType}</p>
+          <p>Status: {property.listingStatus}</p> {/* Use listingStatus */}
           <p>Area: {property.area} sqm</p>
           {property.rooms && <p>Rooms: {property.rooms}</p>}
           {property.floor && <p>Floor: {property.floor}</p>}
