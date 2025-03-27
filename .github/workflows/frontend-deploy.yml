@@ -41,9 +41,9 @@ jobs:
       run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
 
     - name: Build Docker image
-      working-directory: frontend # Path relative to checkout root
+      # Removed working-directory, using cd instead
       run: |-
-        docker build . \
+        cd frontend && docker build . \
           --build-arg NEXT_PUBLIC_STRAPI_API_URL=${{ secrets.NEXT_PUBLIC_STRAPI_API_URL_PROD }} \
           --build-arg NEXT_PUBLIC_YANDEX_MAPS_API_KEY=${{ secrets.NEXT_PUBLIC_YANDEX_MAPS_API_KEY }} \
           -t ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}

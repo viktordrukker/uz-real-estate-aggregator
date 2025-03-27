@@ -41,9 +41,9 @@ jobs:
       run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
 
     - name: Build Docker image
-      working-directory: backend # Path relative to checkout root
+      # Removed working-directory, using cd instead
       run: |-
-        docker build . -t ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        cd backend && docker build . -t ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
     - name: Push Docker image to Artifact Registry
       run: |-
@@ -56,7 +56,8 @@ jobs:
         service: ${{ env.SERVICE_NAME }}
         region: ${{ env.GCP_REGION }}
         image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-        secrets: | # Use multi-line string KEY=VALUE format
+        # Use env_vars instead of secrets for simplicity with GitHub Secrets
+        env_vars: |
           DATABASE_HOST=${{ secrets.DATABASE_HOST }}
           DATABASE_PORT=5432
           DATABASE_NAME=${{ secrets.DATABASE_NAME }}
@@ -68,6 +69,8 @@ jobs:
           ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }}
           API_TOKEN_SALT=${{ secrets.API_TOKEN_SALT }}
           APP_KEYS=${{ secrets.APP_KEYS }}
+          # Ensure NODE_ENV is set for production configurations
+          NODE_ENV=production
 
     - name: Output Cloud Run service URL
       run: echo "Cloud Run service URL:" ${{ steps.deploy.outputs.url }} # Corrected syntax
