@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'uz-real-estate-aggregator/backend/**'
+      - '.github/workflows/backend-deploy.yml' # Also trigger on workflow changes
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
