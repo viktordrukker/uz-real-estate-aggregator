@@ -77,12 +77,6 @@
       "relation": "manyToOne",
       "target": "api::location.location",
       "inversedBy": "properties"
-    },
-    "amenities": {
-      "type": "relation",
-      "relation": "manyToMany",
-      "target": "api::amenity.amenity",
-      "inversedBy": "properties"
     }
   }
 }

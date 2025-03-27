@@ -1,0 +1,32 @@
+[
+  {
+    "title": "Modern Apartment Downtown Tashkent",
+    "description": "A beautiful and modern apartment located in the heart of Tashkent. Close to shops and restaurants.",
+    "price": 75000,
+    "area": 80,
+    "rooms": 3,
+    "floor": 5,
+    "address": "10 Main St, Tashkent",
+    "listingType": "Buy",
+    "status": "Available",
+    "coordinates": {"latitude": 41.3111, "longitude": 69.2797},
+    "category": "Apartment",
+    "location": "Tashkent",
+    "amenities": ["Parking", "Balcony", "Furnished"]
+  },
+  {
+    "title": "Charming House near Registan",
+    "description": "Lovely traditional house with a courtyard, walking distance to Registan Square.",
+    "price": 150000,
+    "area": 120,
+    "rooms": 4,
+    "floor": null,
+    "address": "20 Main St, Samarkand",
+    "listingType": "Buy",
+    "status": "Available",
+    "coordinates": {"latitude": 39.6548, "longitude": 66.9758},
+    "category": "House",
+    "location": "Samarkand",
+    "amenities": ["Parking", "Furnished", "Garden"]
+  }
+]

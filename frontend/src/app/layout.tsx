@@ -5,7 +5,8 @@
 // import type { Metadata } from "next";
 import Link from 'next/link';
 import "./globals.css";
-import { AuthProvider, useAuth } from '@/context/AuthContext'; // Import AuthProvider and useAuth
+import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { FavoritesProvider } from '@/context/FavoritesContext'; // Import FavoritesProvider
 
 // export const metadata: Metadata = {
 //   title: "Uzbekistan Real Estate",
@@ -25,6 +26,7 @@ function SiteHeader() {
             <span>Loading...</span> // Show loading state
           ) : user ? (
             <>
+              <Link href="/favorites" className="hover:text-gray-300 mr-4">My Favorites</Link> {/* Add Favorites Link */}
               <span className="mr-4">Welcome, {user.username}!</span>
               <button
                 onClick={logout}
@@ -55,9 +57,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased flex flex-col min-h-screen">
-        <AuthProvider> {/* AuthProvider needs to wrap components using the context */}
-          <SiteHeader /> {/* Use the new Header component */}
-          <main className="p-4 flex-grow container mx-auto">
+        <AuthProvider>
+          <FavoritesProvider> {/* Wrap with FavoritesProvider */}
+            <SiteHeader /> {/* Use the new Header component */}
+            <main className="p-4 flex-grow container mx-auto">
             {/* Page content will be rendered here */}
             {children}
           </main>
@@ -65,6 +68,7 @@ export default function RootLayout({
             {/* Placeholder for Footer Content */}
             &copy; {new Date().getFullYear()} Uzbekistan Real Estate. All rights reserved.
           </footer>
+          </FavoritesProvider> {/* Close FavoritesProvider */}
         </AuthProvider>
       </body>
     </html>

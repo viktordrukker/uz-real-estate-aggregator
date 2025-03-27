@@ -36,9 +36,15 @@
         *   `Amenity`: Includes name. *Note: `properties` relation removed due to seeding issues.*
         *   `Favorite`: Includes user (relation), property (relation). Created as an alternative to extending the User model. *Note: `inversedBy` removed from user relation due to startup errors.*
     *   **API Files:** Core API files (routes, controllers, services) created/corrected using Strapi factories for Property, Category, Location, Amenity, Favorite.
-    *   **API Permissions (WBS 2.2):** Public role granted `find` and `findOne` permissions for Property, Category, Location, Amenity via Admin Panel. `Favorite` permissions TBD. Public role granted `register` permission for Users-Permissions.
+    *   **API Permissions (WBS 2.2):**
+        *   Public role: `find`/`findOne` for Property, Category, Location, Amenity; `register` for Users-Permissions.
+        *   Authenticated role: `find`/`findOne` for Property, Category, Location, Amenity, User; `create`/`find`/`delete` for Favorite. (Corrected during Favorites implementation).
     *   **Sample Data:** Basic Categories, Locations, Amenities, and 40 randomized Properties (without amenities linked) successfully seeded using the **Strapi Console method** (pasting script block).
-    *   **Documentation:** Basic `README.md` created.
+    *   **Favorites API (WBS 2.0):**
+        *   Custom controller actions implemented for `create` (associates user) and `deleteByPropertyId` (custom route for secure deletion by property ID).
+        *   Default `find` action used for listing favorites (requires frontend filtering by user).
+        *   Routes configured accordingly, policy application removed due to persistent startup errors (security handled in controller/frontend).
+    *   **Documentation:** Basic `README.md` created. `LESSONS_LEARNED.md` added.
 *   **Frontend (Next.js 15.2.4):**
     *   **Installation:** Next.js project created with TypeScript, Tailwind CSS, App Router.
     *   **Basic Layout (WBS 3.1.3):** Header, Main, Footer structure implemented in `layout.tsx`. Header includes conditional Login/Register links.
@@ -50,6 +56,11 @@
     *   **Loading State (WBS 3.5):** Basic `loading.tsx` implemented for the homepage route group (shows simple text).
     *   **Authentication UI:** Placeholder Login/Register pages created. Basic `LoginForm` and `RegisterForm` components created with UI placeholders for forgot password/social login.
     *   **Authentication Logic:** `AuthContext` and `AuthProvider` created using `localStorage`. Login/Registration API calls implemented in forms, updating context on success. Header UI updates based on login state. Logout implemented.
+    *   **Favorites Feature (WBS 2.0):**
+        *   `FavoritesContext` created to manage global state of favorited property IDs. Fetches initial IDs on login/load. Provides `addFavorite`, `removeFavorite`, `isFavorited` functions.
+        *   `layout.tsx` wrapped with `FavoritesProvider`.
+        *   `PropertyCard.tsx` and `[documentId]/page.tsx` updated to use `FavoritesContext` for displaying status and handling add/remove actions.
+        *   `/favorites/page.tsx` created, uses context to get favorite IDs and fetches corresponding property details. Instant removal UI update implemented.
     *   **Documentation:** Basic `README.md` created.
 
 ---
@@ -63,8 +74,10 @@
 *   **Strapi Plugin/Core Issues (Suspected):**
     *   **`users-permissions` Instability:** Extending the core User model caused fatal startup errors (`Undefined attribute level operator id`). **Workaround:** Removed extension, using dedicated `Favorite` model instead. Favorites feature implementation pending.
     *   **API Token `Create` Permissions (403 Error):** API tokens failed for `POST` requests despite correct permissions. **Workaround:** Used `strapi console` for seeding. Automated seeding via API/script is deferred.
-    *   **Relational Filtering (400 Error):** Filtering by related field attributes (e.g., `location.name`) failed. Filtering by relation ID also failed. **Workaround:** Deferred complex relational filtering; only direct attribute filtering (`listingType`) is currently functional.
-    *   **Many-to-Many Seeding (`joinColumn` Error):** Seeding script failed when assigning many-to-many (`amenities`) relation. **Workaround:** Removed amenity assignment from seed data/script.
+    *   **Relational Filtering:** Initial report of 400 errors was likely due to incorrect syntax or missing Public permissions. **Resolved:** Confirmed via `curl` that filtering by relation ID (`filters[relation][id]=...`) and nested attributes (`filters[relation][field]=...`) works correctly with the REST API. Advanced filtering (WBS 5.0) is unblocked.
+    *   **Strapi Policy Resolution:** Persistent `Policy ... not found` errors when trying to apply `plugin::users-permissions.isAuthenticated` via route config (both `createCoreRouter` config and explicit `routes` array). **Workaround:** Removed policy config from `favorite.routes.ts`, relying on checks within custom controller actions and frontend filtering. Needs further investigation if stricter route-level policy enforcement is desired.
+    *   **Strapi `entityService` Population/FK:** `entityService.findMany('api::favorite.favorite', ...)` failed to return the `property` foreign key ID or populate the relation reliably within the custom controller context, despite various attempts (`populate: true`, `populate: ['property']`, `fields: ['property']`, explicit populate object). **Workaround:** Switched to using the standard REST API (`GET /api/favorites?filters[...]&populate=property`) on the frontend, which worked correctly after permissions were fixed.
+    *   **Many-to-Many Seeding (`joinColumn` Error):** Seeding script failed when assigning many-to-many (`amenities`) relation. **Workaround:** Removed amenity assignment from seed data/script. (Still unresolved).
 *   **Strapi Scripting Issues:**
     *   `strapi exec`: Command not found.
     *   Manual Bootstrap (`node script.js`): Failed (`strapiFactory is not a function`, config loading errors). **Workaround:** Used `strapi console` for seeding.
@@ -76,9 +89,14 @@
 
 ## IV. Remaining WBS Items & Next Steps (High Level):
 
-1.  **Favorites Feature:** Implement frontend UI (button), backend API (custom controller/service for create/delete favorites based on authenticated user), and `/favorites` page.
-2.  **Frontend Refinements:** Populate/display relations (Category, Location), implement image upload/display, improve error handling, format data, enhance loading states.
-3.  **Advanced Filtering:** Resolve relational filtering issue (potentially requires PostgreSQL or Strapi update/bugfix) and implement UI/logic.
+1.  **Favorites Feature (WBS 2.0):** **DONE** (Core functionality implemented with frontend context).
+2.  **Frontend Refinements (WBS 3.0, 4.0):**
+    *   Populate/display relations (Category, Location) on cards/details page.
+    *   Implement image display on cards/details page.
+    *   Format price/area data.
+    *   Improve loading states (e.g., skeleton loaders).
+    *   Improve error handling feedback.
+3.  **Advanced Filtering (WBS 5.0):** Implement UI/logic for filtering by Category, Location, Price, Rooms, etc. (Backend filtering confirmed possible).
 4.  **Map Enhancements:** List view map.
 5.  **Backend:** Customize Admin Panel, add validation.
 6.  **CI/CD & Deployment:** PostgreSQL setup, Docker, Pipeline config.

@@ -16,12 +16,6 @@
       "type": "string",
       "required": true,
       "unique": true
-    },
-    "properties": {
-      "type": "relation",
-      "relation": "manyToMany",
-      "target": "api::property.property",
-      "mappedBy": "amenities"
     }
   }
 }
