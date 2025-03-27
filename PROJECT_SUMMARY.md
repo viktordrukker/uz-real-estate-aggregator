@@ -97,7 +97,8 @@
 1.  **Favorites Feature (WBS 2.0):** **DONE** (Core functionality implemented with frontend context).
 2.  **Frontend Refinements (WBS 3.0, 4.0):**
     *   Displaying Category/Location names: **DONE**.
-    *   Displaying primary Image: **DONE**.
+    *   Displaying primary Image: **DONE** (on Card and Details page).
+    *   Displaying Image Thumbnails: **DONE** (on Details page).
     *   Formatting Price: **DONE**.
     *   Formatting Area: **DONE** (implicitly via 'sqm' suffix).
     *   Improve loading states (e.g., skeleton loaders).

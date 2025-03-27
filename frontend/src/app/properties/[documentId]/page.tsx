@@ -191,7 +191,7 @@ export default function PropertyDetailsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
-          {/* Image Display */}
+          {/* Main Image Display */}
           <div className="w-full h-96 bg-gray-200 mb-4 rounded overflow-hidden">
             {property.images && property.images.length > 0 ? (
               <img
@@ -199,13 +199,28 @@ export default function PropertyDetailsPage() {
                 src={`${process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'}${property.images[0].formats?.medium?.url || property.images[0].url}`}
                 alt={property.images[0].alternativeText || property.title || 'Property image'}
                 className="w-full h-full object-cover"
-                onError={(e) => (e.currentTarget.src = '/placeholder.png')}
+                onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png'; }} // Type assertion for onError
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-500">No Image Available</div>
             )}
           </div>
-          {/* TODO: Add gallery for multiple images */}
+
+          {/* Thumbnail Gallery */}
+          {property.images && property.images.length > 1 && (
+            <div className="flex space-x-2 mb-4 overflow-x-auto">
+              {property.images.map((image) => (
+                <div key={image.id} className="w-20 h-20 flex-shrink-0 bg-gray-200 rounded overflow-hidden">
+                   <img
+                    src={`${process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'}${image.formats?.thumbnail?.url || image.url}`}
+                    alt={image.alternativeText || `Thumbnail ${image.id}`}
+                    className="w-full h-full object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png'; }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Map Section */}
           <h2 className="text-2xl font-semibold mt-6 mb-2">Location</h2>
