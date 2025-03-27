@@ -51,7 +51,7 @@ This document tracks key technical findings, decisions, and workarounds encounte
     *   Implemented `FavoritesContext` to manage a `Set<number>` of favorited property IDs.
     *   Context fetches initial IDs using `GET /api/favorites?filters[user][id][$eq]=...&populate[property][fields][0]=id`.
     *   Context provides `addFavorite`, `removeFavorite`, `isFavorited` functions.
-    *   `PropertyCard` and Details Page use the context for displaying status and triggering updates, ensuring UI consistency.
+    *   `PropertyCard` and Details Page use the context for displaying status and handling updates, ensuring UI consistency.
 
 **Outcome:**
 *   Favorites feature (add, remove, view list) is functional.
@@ -61,5 +61,43 @@ This document tracks key technical findings, decisions, and workarounds encounte
 *   `entityService` population/field selection for relations behaved unexpectedly within the custom controller context.
 
 **Decision:** Proceeded with standard REST API for listing favorites and frontend context for state management. Documented policy resolution and `entityService` population issues.
+
+---
+
+**Date:** 2025-03-27
+
+**Topic:** API Structure & Details Page Routing (WBS 3.0, 5.0)
+
+**Issue:** Confusion and errors related to API response structure (flat vs. nested `attributes`) and the identifier used for the `findOne` property endpoint (`id` vs `documentId`).
+
+**Investigation & Resolution:**
+1.  **API Response Structure:** Console logs confirmed that the Strapi API (v5.11.3 with SQLite) is returning a **flat structure** for both `find` and `findOne` endpoints, even when populating relations. Fields like `title`, `price`, `category`, `images` are directly under the main data object, not nested within an `attributes` object.
+2.  **`findOne` Identifier:** `curl` tests confirmed that the `findOne` endpoint (`/api/properties/:identifier`) requires the string **`documentId`** in the URL path, not the numeric `id`. Using the numeric `id` resulted in a 404 Not Found, while using the `documentId` returned the correct data (200 OK).
+3.  **Frontend Code Correction:**
+    *   The shared TypeScript interfaces in `types/index.ts` were updated to reflect the **flat structure**.
+    *   All components (`PropertyCard.tsx`, `page.tsx`, `[documentId]/page.tsx`, `favorites/page.tsx`) were updated to access data directly (e.g., `property.title`, `property.images`) instead of through a non-existent `attributes` field.
+    *   The `Link` component in `PropertyCard.tsx` was corrected to use `href={`/properties/${property.documentId}`}`.
+    *   The `fetch` call in `[documentId]/page.tsx` was confirmed to correctly use the `documentId` extracted from the URL parameters. The previous 400 error was likely due to the component attempting to access non-existent `attributes` before the fix, or a temporary issue with the `populate` syntax during debugging (using `populate=*` now works reliably).
+
+**Outcome:**
+*   Frontend types and components now correctly match the flat API response structure.
+*   Navigation to and fetching data for the property details page using `documentId` is functional.
+
+**Decision:** Standardized on using the flat data structure and `documentId` for `findOne` routes. Updated documentation to reflect these findings.
+
+---
+
+**Date:** 2025-03-27
+
+**Topic:** Loading States (WBS 3.5)
+
+**Enhancement:** Implemented skeleton loading states for a better user experience during data fetching.
+
+**Implementation:**
+1.  Added `react-loading-skeleton` dependency.
+2.  Created `PropertyCardSkeleton.tsx` and `PropertyDetailsSkeleton.tsx` components.
+3.  Integrated skeletons into `page.tsx`, `[documentId]/page.tsx`, and `favorites/page.tsx` to display while data is loading.
+
+**Outcome:** Application now shows placeholder layouts instead of simple text or blank areas during loading, improving perceived performance.
 
 ---

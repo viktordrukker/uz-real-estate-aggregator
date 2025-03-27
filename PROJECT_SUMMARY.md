@@ -58,7 +58,7 @@
         *   Filtering by Listing Type, Category ID, and Location ID implemented and working correctly.
         *   Basic pagination controls (`PaginationControls.tsx`) added to homepage.
         *   Homepage displays count of filtered results and overall total properties.
-    *   **Loading State (WBS 3.5):** Basic `loading.tsx` implemented for the homepage route group (shows simple text).
+    *   **Loading State (WBS 3.5):** Implemented skeleton loading states (`PropertyCardSkeleton`, `PropertyDetailsSkeleton`) for Homepage, Details Page, and Favorites Page.
     *   **Authentication UI:** Placeholder Login/Register pages created. Basic `LoginForm` and `RegisterForm` components created with UI placeholders for forgot password/social login.
     *   **Authentication Logic:** `AuthContext` and `AuthProvider` created using `localStorage`. Login/Registration API calls implemented in forms, updating context on success. Header UI updates based on login state. Logout implemented.
     *   **Favorites Feature (WBS 2.0):**
@@ -72,12 +72,12 @@
 
 ## III. Key Learnings & Unresolved Issues / Deferred Items
 
-*   **Strapi v5 Breaking Changes:**
-    *   **`documentId` vs `id`:** `findOne` API endpoints use `documentId`. (Handled)
-    *   **Flat API Response:** Default API responses lack `attributes` nesting. (Handled)
+*   **Strapi v5 API Structure:**
+    *   **`documentId` vs `id`:** Confirmed via `curl` and frontend testing that the `findOne` API endpoint (`/api/properties/:id`) uses the string `documentId` as the identifier in the URL path, not the numeric `id`. Links updated accordingly.
+    *   **Flat API Response:** Confirmed via console logs that the API (for both `find` and `findOne` with population) returns a **flat structure** by default (no top-level `attributes` wrapper). Shared types (`types/index.ts`) and component data access logic updated to reflect this flat structure.
     *   **`mappedBy` vs `inversedBy`:** v5 prefers `mappedBy`. (Partially addressed, caused warnings/errors).
 *   **Strapi Plugin/Core Issues (Suspected):**
-    *   **`users-permissions` Instability:** Extending the core User model caused fatal startup errors (`Undefined attribute level operator id`). **Workaround:** Removed extension, using dedicated `Favorite` model instead. Favorites feature implementation pending.
+    *   **`users-permissions` Instability:** Extending the core User model caused fatal startup errors. **Workaround:** Removed extension, using dedicated `Favorite` model.
     *   **API Token `Create` Permissions (403 Error):** API tokens failed for `POST` requests despite correct permissions. **Workaround:** Used `strapi console` for seeding. Automated seeding via API/script is deferred.
     *   **Relational Filtering:** Initial report of 400 errors was likely due to incorrect syntax or missing Public permissions. **Resolved:** Confirmed via `curl` and frontend implementation (using `qs`) that filtering by relation ID (`filters[relation][id]=...`) and nested attributes (`filters[relation][field]=...`) works correctly with the REST API.
     *   **Strapi Policy Resolution:** Persistent `Policy ... not found` errors when trying to apply `plugin::users-permissions.isAuthenticated` via route config. **Workaround:** Removed policy config from `favorite.routes.ts`, relying on checks within custom controller actions and frontend filtering.
@@ -97,11 +97,11 @@
 1.  **Favorites Feature (WBS 2.0):** **DONE** (Core functionality implemented with frontend context).
 2.  **Frontend Refinements (WBS 3.0, 4.0):**
     *   Displaying Category/Location names: **DONE**.
-    *   Displaying primary Image: **DONE** (on Card and Details page).
-    *   Displaying Image Thumbnails: **DONE** (on Details page).
+    *   Displaying primary Image: **DONE**.
+    *   Displaying Image Thumbnails: **DONE**.
     *   Formatting Price: **DONE**.
-    *   Formatting Area: **DONE** (implicitly via 'sqm' suffix).
-    *   Improve loading states (e.g., skeleton loaders).
+    *   Formatting Area: **DONE**.
+    *   Improve loading states: **DONE** (Skeleton loaders implemented).
     *   Improve error handling feedback.
     *   Display Amenities (Blocked by seeding issue).
     *   Image Gallery/Multiple Images display on details page.
