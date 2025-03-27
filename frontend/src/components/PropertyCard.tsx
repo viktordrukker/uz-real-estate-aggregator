@@ -3,50 +3,8 @@
 import React, { useState } from 'react'; // Keep useState for local loading/error
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { useFavorites } from '@/context/FavoritesContext'; // Import useFavorites
-
-// Define the structure for a Strapi Media object (adjust based on your API response)
-interface StrapiMediaFormat {
-  url: string;
-  // Add other format properties if needed (width, height, etc.)
-}
-interface StrapiMedia {
-  id: number;
-  name: string;
-  alternativeText?: string | null;
-  caption?: string | null;
-  url: string; // Default URL
-  formats?: {
-    thumbnail?: StrapiMediaFormat;
-    small?: StrapiMediaFormat;
-    medium?: StrapiMediaFormat;
-    large?: StrapiMediaFormat;
-  } | null;
-  // Add other media fields if needed
-}
-
-// Define the structure of a Property based on the actual API response
-interface Property {
-  id: number; // Keep the numerical ID if needed for keys, etc.
-  documentId: string; // Add the documentId used for API lookups in v5
-  title: string;
-  description?: string | null;
-  price: number;
-  area: number;
-  rooms?: number | null;
-  floor?: number | null;
-  address?: string | null;
-  listingType: 'Buy' | 'Rent';
-  status: 'Available' | 'Sold' | 'Rented';
-  createdAt: string;
-  updatedAt: string;
-  publishedAt?: string | null;
-  // Add relations to interface
-  category?: { id: number; name: string; } | null;
-  location?: { id: number; name: string; } | null;
-  images?: StrapiMedia[] | null; // Array of media objects
-  // TODO: Add amenities later
-}
+import { useFavorites } from '@/context/FavoritesContext';
+import { Property } from '@/types'; // Import shared Property type
 
 interface PropertyCardProps {
   property: Property;
@@ -60,32 +18,34 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, initialIsFavorite
     return null;
   }
 
-  // Get the URL for the primary image (prefer small format, fallback to original)
-  const imageUrl = property.images?.[0]?.formats?.small?.url || property.images?.[0]?.url
-    ? `${process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'}${property.images?.[0]?.formats?.small?.url || property.images?.[0]?.url}`
-    : '/placeholder.png'; // Placeholder image path if no image
+  // Get the URL for the primary image using the correct Strapi v5 structure
+  const firstImage = property.attributes.images?.data?.[0]?.attributes;
+  const imageUrl = firstImage
+    ? `${process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'}${firstImage.formats?.small?.url || firstImage.url}`
+    : '/placeholder.png';
 
-  const { user } = useAuth(); // Only need user status to show button
+  const { user } = useAuth();
   const { isFavorited, addFavorite, removeFavorite, isLoading: favoritesLoading } = useFavorites(); // Use context
 
   const [localLoading, setLocalLoading] = useState(false); // Local loading state for button press
   const [error, setError] = useState<string | null>(null);
 
-  const currentIsFavorited = isFavorited(property.id); // Get status from context
+  // Use property ID for context checks/actions
+  const propertyId = property.id;
+  const currentIsFavorited = isFavorited(propertyId);
 
   const handleFavoriteToggle = async () => {
-    if (!user || localLoading || favoritesLoading) return; // Check local and context loading
+    if (!user || localLoading || favoritesLoading) return;
 
     setLocalLoading(true);
     setError(null);
 
     try {
       if (currentIsFavorited) {
-        await removeFavorite(property.id);
-        // Call onRemove immediately if provided (for FavoritesPage)
-        onRemove?.(property.id);
+        await removeFavorite(propertyId);
+        onRemove?.(propertyId); // Call onRemove if provided
       } else {
-        await addFavorite(property.id);
+        await addFavorite(propertyId);
       }
     } catch (err: any) {
       console.error("Favorite toggle error:", err);
@@ -122,30 +82,29 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, initialIsFavorite
       <div className="w-full h-48 bg-gray-200">
         <img
           src={imageUrl}
-          alt={property.title || 'Property image'}
+          alt={firstImage?.alternativeText || property.attributes.title || 'Property image'} // Use alt text or title
           className="w-full h-full object-cover"
-          onError={(e) => (e.currentTarget.src = '/placeholder.png')} // Fallback if image fails to load
+          onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png'; }}
         />
       </div>
       <div className="p-4">
-        <h2 className="text-xl font-semibold mb-2 truncate" title={property.title}>
-          {property.title}
+        <h2 className="text-xl font-semibold mb-2 truncate" title={property.attributes.title}>
+          {property.attributes.title}
         </h2>
         <p className="text-lg font-medium text-blue-600 mb-2">
-          {/* Format price */}
-          {property.price.toLocaleString('en-US', { style: 'currency', currency: 'UZS', minimumFractionDigits: 0 })}
+          {property.attributes.price.toLocaleString('en-US', { style: 'currency', currency: 'UZS', minimumFractionDigits: 0 })}
         </p>
         <div className="text-sm text-gray-600 space-y-1">
-          <p>Type: {property.listingType}</p>
-          <p>Area: {property.area} sqm</p>
-          {property.rooms && <p>Rooms: {property.rooms}</p>}
-          {property.floor && <p>Floor: {property.floor}</p>}
-          {/* Display Category and Location */}
-          {property.category && <p>Category: {property.category.name}</p>}
-          {property.location && <p>Location: {property.location.name}</p>}
+          <p>Type: {property.attributes.listingType}</p>
+          <p>Area: {property.attributes.area} sqm</p>
+          {property.attributes.rooms && <p>Rooms: {property.attributes.rooms}</p>}
+          {property.attributes.floor && <p>Floor: {property.attributes.floor}</p>}
+          {/* Access relations via attributes.relation.data.attributes */}
+          {property.attributes.category?.data && <p>Category: {property.attributes.category.data.attributes.name}</p>}
+          {property.attributes.location?.data && <p>Location: {property.attributes.location.data.attributes.name}</p>}
         </div>
-        {/* Link using documentId for Strapi v5 */}
-        <Link href={`/properties/${property.documentId}`} className="text-blue-500 hover:underline mt-4 inline-block">
+        {/* Link using numeric id for consistency, assuming route handles it or adjust route later */}
+        <Link href={`/properties/${property.id}`} className="text-blue-500 hover:underline mt-4 inline-block">
           View Details
         </Link>
         {error && <p className="text-red-500 text-xs mt-1">{error}</p>}

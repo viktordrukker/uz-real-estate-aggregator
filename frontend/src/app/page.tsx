@@ -1,40 +1,10 @@
-// Define the structure of a Property based on the actual API response
-interface Property {
-  id: number;
-  documentId: string;
-  title: string;
-  description?: string | null;
-  price: number;
-  area: number;
-  rooms?: number | null;
-  floor?: number | null;
-  address?: string | null;
-  listingType: 'Buy' | 'Rent';
-  status: 'Available' | 'Sold' | 'Rented';
-  createdAt: string;
-  updatedAt: string;
-  publishedAt?: string | null;
-  category?: { id: number; name: string; } | null;
-  location?: { id: number; name: string; } | null;
-  images?: {
-      id: number;
-      name: string;
-      alternativeText?: string | null;
-      caption?: string | null;
-      url: string;
-      formats?: {
-        thumbnail?: { url: string };
-        small?: { url: string };
-        medium?: { url: string };
-        large?: { url: string };
-      } | null;
-    }[] | null;
-}
-
 import PropertyCard from '@/components/PropertyCard';
 import PropertyFilters from '@/components/PropertyFilters';
-import PaginationControls from '@/components/PaginationControls'; // Import PaginationControls
+import PaginationControls from '@/components/PaginationControls';
 import qs from 'qs';
+import { Property, PropertiesApiResponse } from '@/types'; // Import shared types
+
+// Remove local Property interface definition (already done in previous step, ensuring it's gone)
 
 interface GetPropertiesParams {
   listingType?: 'Buy' | 'Rent';
@@ -44,6 +14,7 @@ interface GetPropertiesParams {
   pageSize?: number;
 }
 
+// Keep PaginationMetadata interface if not moved to shared types
 interface PaginationMetadata {
   page: number;
   pageSize: number;
@@ -51,16 +22,11 @@ interface PaginationMetadata {
   total: number;
 }
 
-interface PropertiesApiResponse {
-  properties: Property[];
-  pagination: PaginationMetadata;
-}
-
-// Function to fetch properties with filters and pagination
-async function getProperties(params: GetPropertiesParams = {}): Promise<PropertiesApiResponse> {
+// Update return type to use shared Property type
+async function getProperties(params: GetPropertiesParams = {}): Promise<{ properties: Property[], pagination: PaginationMetadata }> {
   const strapiUrl = process.env.STRAPI_URL || 'http://localhost:1337';
 
-  const { page = 1, pageSize = 12, ...filtersParams } = params; // Default page 1, pageSize 12
+  const { page = 1, pageSize = 12, ...filtersParams } = params;
 
   const query = {
     filters: {} as any,
@@ -69,10 +35,9 @@ async function getProperties(params: GetPropertiesParams = {}): Promise<Properti
       page,
       pageSize,
     },
-    sort: ['createdAt:desc'], // Optional: sort by creation date
+    sort: ['createdAt:desc'],
   };
 
-  // Add filters conditionally
   if (filtersParams.listingType) {
     query.filters.listingType = { $eq: filtersParams.listingType };
   }
@@ -83,7 +48,6 @@ async function getProperties(params: GetPropertiesParams = {}): Promise<Properti
     query.filters.location = { id: { $eq: filtersParams.locationId } };
   }
 
-  // Remove filters object if it's empty
   if (Object.keys(query.filters).length === 0) {
     delete query.filters;
   }
@@ -95,7 +59,10 @@ async function getProperties(params: GetPropertiesParams = {}): Promise<Properti
   try {
     const res = await fetch(apiUrl, { cache: 'no-store' });
     if (!res.ok) throw new Error(`Failed to fetch properties: ${res.status} ${res.statusText}`);
-    const responseData = await res.json();
+    // Use PropertiesApiResponse for type safety
+    const responseData: PropertiesApiResponse = await res.json();
+    console.log("Raw API Response:", JSON.stringify(responseData, null, 2));
+
     return {
       properties: responseData.data || [],
       pagination: responseData.meta?.pagination || { page: 1, pageSize, pageCount: 0, total: 0 }
@@ -106,10 +73,9 @@ async function getProperties(params: GetPropertiesParams = {}): Promise<Properti
   }
 }
 
-// Function to fetch the total count of all properties
 async function getTotalPropertyCount(): Promise<number> {
   const strapiUrl = process.env.STRAPI_URL || 'http://localhost:1337';
-  const query = qs.stringify({ pagination: { pageSize: 1 } }, { encodeValuesOnly: true }); // Fetch only 1 to get metadata
+  const query = qs.stringify({ pagination: { pageSize: 1 } }, { encodeValuesOnly: true });
   const apiUrl = `${strapiUrl}/api/properties?${query}`;
 
   try {
@@ -123,20 +89,19 @@ async function getTotalPropertyCount(): Promise<number> {
   }
 }
 
-
 interface HomePageProps {
   searchParams?: {
     listingType?: 'Buy' | 'Rent';
     categoryId?: string;
     locationId?: string;
-    page?: string; // Page number from URL
+    page?: string;
   };
 }
 
 export default async function Home({ searchParams }: HomePageProps) {
   const resolvedSearchParams = await searchParams;
   const currentPage = parseInt(resolvedSearchParams?.page || '1', 10);
-  const pageSize = 12; // Or make this configurable
+  const pageSize = 12;
 
   const filters: GetPropertiesParams = { page: currentPage, pageSize };
   if (resolvedSearchParams?.listingType) {
@@ -151,7 +116,6 @@ export default async function Home({ searchParams }: HomePageProps) {
     if (!isNaN(locationIdNum)) filters.locationId = locationIdNum;
   }
 
-  // Fetch properties and total count concurrently
   const [{ properties, pagination }, totalCount] = await Promise.all([
     getProperties(filters),
     getTotalPropertyCount()
@@ -160,14 +124,10 @@ export default async function Home({ searchParams }: HomePageProps) {
   return (
     <main className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6">Property Listings</h1>
-
       <PropertyFilters />
-
-      {/* Display the count */}
       <p className="mb-4 text-gray-600">
         Showing {properties.length} properties (Page {pagination.page} of {pagination.pageCount}, Total matching filters: {pagination.total}, Overall total: {totalCount})
       </p>
-
       {properties.length === 0 ? (
         <p>No properties found matching your criteria.</p>
       ) : (
@@ -177,16 +137,6 @@ export default async function Home({ searchParams }: HomePageProps) {
           ))}
         </div>
       )}
-
-      {/* TODO: Add PaginationControls component here */}
-      {/* <PaginationControls
-          currentPage={pagination.page}
-          pageCount={pagination.pageCount}
-          total={pagination.total} // Total matching filters
-          pageSize={pagination.pageSize}
-       /> */}
-
-      {/* Add Pagination Controls if there are multiple pages */}
       {pagination.pageCount > 1 && (
         <PaginationControls
           currentPage={pagination.page}

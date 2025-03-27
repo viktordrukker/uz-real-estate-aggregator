@@ -4,53 +4,10 @@ import React, { useState, useEffect } from 'react'; // Keep useState for local l
 import { useParams } from 'next/navigation';
 import YandexMap from '@/components/YandexMap';
 import { useAuth } from '@/context/AuthContext';
-import { useFavorites } from '@/context/FavoritesContext'; // Import useFavorites
+import { useFavorites } from '@/context/FavoritesContext';
+import { Property, SinglePropertyApiResponse } from '@/types'; // Import shared types
 
-// Define the structure of a Property based on the actual API response
-// Consider moving this interface to a shared types file
-interface Property {
-  id: number; // Keep the numerical ID if needed
-  documentId: string; // Add the documentId used for API lookups in v5
-  title: string;
-  description?: string | null;
-  price: number;
-  area: number;
-  rooms?: number | null;
-  floor?: number | null;
-  address?: string | null;
-  listingType: 'Buy' | 'Rent';
-  status: 'Available' | 'Sold' | 'Rented';
-  createdAt: string;
-  updatedAt: string;
-  publishedAt?: string | null;
-  coordinates?: { latitude: number; longitude: number } | null;
-  // Define structure for populated relations
-  category?: {
-    id: number;
-    name: string;
-    // Add other category fields if needed
-  } | null;
-  location?: {
-    id: number;
-    name: string;
-    // Add other location fields if needed
-  } | null;
-  images?: { // Use the same StrapiMedia definition as in PropertyCard
-      id: number;
-      name: string;
-      alternativeText?: string | null;
-      caption?: string | null;
-      url: string;
-      formats?: {
-        thumbnail?: { url: string };
-        small?: { url: string };
-        medium?: { url: string };
-        large?: { url: string };
-      } | null;
-    }[] | null;
-  // TODO: Add amenities later
-}
-
+// Remove local Property interface definition
 
 // Client Component
 export default function PropertyDetailsPage() {
@@ -80,7 +37,8 @@ export default function PropertyDetailsPage() {
       setPageError(null);
       const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'; // Use NEXT_PUBLIC_ prefix
       try {
-        const res = await fetch(`${strapiUrl}/api/properties/${documentId}?populate=*`, { cache: 'no-store' });
+        // Populate all relations needed
+        const res = await fetch(`${strapiUrl}/api/properties/${documentId}?populate[category]=*&populate[location]=*&populate[images]=*`, { cache: 'no-store' });
 
         if (!res.ok) {
           if (res.status === 404) {
@@ -90,10 +48,9 @@ export default function PropertyDetailsPage() {
           }
           setProperty(null);
         } else {
-          const responseData = await res.json();
-          const propertyData = responseData.data || null;
-          setProperty(propertyData);
-          // No need to fetch initial favorite status here anymore, context handles it
+          // Use SinglePropertyApiResponse for type safety
+          const responseData: SinglePropertyApiResponse = await res.json();
+          setProperty(responseData.data || null);
         }
       } catch (error: any) {
         console.error(`Error fetching property ${documentId}:`, error);
@@ -150,36 +107,31 @@ export default function PropertyDetailsPage() {
 
   // --- Render actual page content ---
 
-  // Parse coordinates safely (can stay outside useEffect as it depends on fetched 'property')
+  // Access data via property.attributes
   let mapCenter: [number, number] | undefined;
   let placemarkCoords: [number, number] | undefined;
   try {
-    if (property.coordinates?.latitude && property.coordinates?.longitude) {
-      mapCenter = [property.coordinates.latitude, property.coordinates.longitude];
-      placemarkCoords = mapCenter; // Use same coords for placemark
+    if (property.attributes.coordinates?.latitude && property.attributes.coordinates?.longitude) {
+      mapCenter = [property.attributes.coordinates.latitude, property.attributes.coordinates.longitude];
+      placemarkCoords = mapCenter;
     }
   } catch (e) {
     console.error("Error parsing coordinates:", e);
-    // Use a default center if coordinates are invalid/missing
     mapCenter = [41.2995, 69.2401]; // Default to Tashkent center
   }
-
-  // TODO: Add image display
-  // TODO: Display relations (Category, Location, Amenities)
 
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-start mb-4">
-        <h1 className="text-3xl font-bold">{property.title}</h1>
-        {/* Favorite Button */}
+        <h1 className="text-3xl font-bold">{property.attributes.title}</h1>
         {user && (
           <button
             onClick={handleFavoriteToggle}
-            disabled={isLoading} // Use combined loading state
+            disabled={isLoading}
             className={`p-2 rounded-full text-white ${
-              isFavorited(property.id) ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-400 hover:bg-gray-500' // Use context state
+              isFavorited(property.id) ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-400 hover:bg-gray-500'
             } transition-colors disabled:opacity-50`}
-            aria-label={isFavorited(property.id) ? 'Remove from favorites' : 'Add to favorites'} // Use context state
+            aria-label={isFavorited(property.id) ? 'Remove from favorites' : 'Add to favorites'}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
@@ -193,13 +145,12 @@ export default function PropertyDetailsPage() {
         <div className="md:col-span-2">
           {/* Main Image Display */}
           <div className="w-full h-96 bg-gray-200 mb-4 rounded overflow-hidden">
-            {property.images && property.images.length > 0 ? (
+            {property.attributes.images?.data && property.attributes.images.data.length > 0 ? (
               <img
-                // Prefer medium format, fallback to original, then placeholder
-                src={`${process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'}${property.images[0].formats?.medium?.url || property.images[0].url}`}
-                alt={property.images[0].alternativeText || property.title || 'Property image'}
+                src={`${process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'}${property.attributes.images.data[0].attributes.formats?.medium?.url || property.attributes.images.data[0].attributes.url}`}
+                alt={property.attributes.images.data[0].attributes.alternativeText || property.attributes.title || 'Property image'}
                 className="w-full h-full object-cover"
-                onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png'; }} // Type assertion for onError
+                onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png'; }}
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-500">No Image Available</div>
@@ -207,13 +158,13 @@ export default function PropertyDetailsPage() {
           </div>
 
           {/* Thumbnail Gallery */}
-          {property.images && property.images.length > 1 && (
+          {property.attributes.images?.data && property.attributes.images.data.length > 1 && (
             <div className="flex space-x-2 mb-4 overflow-x-auto">
-              {property.images.map((image) => (
+              {property.attributes.images.data.map((image) => (
                 <div key={image.id} className="w-20 h-20 flex-shrink-0 bg-gray-200 rounded overflow-hidden">
                    <img
-                    src={`${process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'}${image.formats?.thumbnail?.url || image.url}`}
-                    alt={image.alternativeText || `Thumbnail ${image.id}`}
+                    src={`${process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'}${image.attributes.formats?.thumbnail?.url || image.attributes.url}`}
+                    alt={image.attributes.alternativeText || `Thumbnail ${image.id}`}
                     className="w-full h-full object-cover"
                     onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png'; }}
                   />
@@ -232,25 +183,23 @@ export default function PropertyDetailsPage() {
 
           <h2 className="text-2xl font-semibold mt-6 mb-2">Description</h2>
           <p className="text-gray-700 whitespace-pre-wrap">
-            {property.description || 'No description available.'}
+            {property.attributes.description || 'No description available.'}
           </p>
         </div>
         <div className="md:col-span-1 border rounded p-4 shadow-md h-fit">
           <h2 className="text-2xl font-semibold mb-4">Details</h2>
           <p className="text-xl font-medium text-blue-600 mb-3">
-            {/* Format price */}
-            {property.price.toLocaleString('en-US', { style: 'currency', currency: 'UZS', minimumFractionDigits: 0 })}
+            {property.attributes.price.toLocaleString('en-US', { style: 'currency', currency: 'UZS', minimumFractionDigits: 0 })}
           </p>
           <div className="space-y-2 text-gray-700">
-            <p><strong>Type:</strong> {property.listingType}</p>
-            <p><strong>Status:</strong> {property.status}</p>
-            <p><strong>Area:</strong> {property.area} sqm</p>
-            {property.rooms && <p><strong>Rooms:</strong> {property.rooms}</p>}
-            {property.floor && <p><strong>Floor:</strong> {property.floor}</p>}
-            {property.address && <p><strong>Address:</strong> {property.address}</p>}
-            {/* Display Category and Location */}
-            {property.category && <p><strong>Category:</strong> {property.category.name}</p>}
-            {property.location && <p><strong>Location:</strong> {property.location.name}</p>}
+            <p><strong>Type:</strong> {property.attributes.listingType}</p>
+            <p><strong>Status:</strong> {property.attributes.status}</p>
+            <p><strong>Area:</strong> {property.attributes.area} sqm</p>
+            {property.attributes.rooms && <p><strong>Rooms:</strong> {property.attributes.rooms}</p>}
+            {property.attributes.floor && <p><strong>Floor:</strong> {property.attributes.floor}</p>}
+            {property.attributes.address && <p><strong>Address:</strong> {property.attributes.address}</p>}
+            {property.attributes.category?.data && <p><strong>Category:</strong> {property.attributes.category.data.attributes.name}</p>}
+            {property.attributes.location?.data && <p><strong>Location:</strong> {property.attributes.location.data.attributes.name}</p>}
             {/* TODO: Display Amenities */}
           </div>
         </div>
