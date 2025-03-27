@@ -34,51 +34,51 @@ jobs:
         workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
         service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
 
-    # - name: Set up Cloud SDK
-    #   uses: 'google-github-actions/setup-gcloud@v2'
+    - name: Set up Cloud SDK
+      uses: 'google-github-actions/setup-gcloud@v2'
 
-    # - name: Configure Docker for Artifact Registry
-    #   run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
+    - name: Configure Docker for Artifact Registry
+      run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
 
-    # - name: Build Docker image
-    #   working-directory: ./uz-real-estate-aggregator/backend
-    #   run: |-
-    #     docker build . -t ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+    - name: Build Docker image
+      working-directory: ./uz-real-estate-aggregator/backend
+      run: |-
+        docker build . -t ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-    # - name: Push Docker image to Artifact Registry
-    #   run: |-
-    #     docker push ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+    - name: Push Docker image to Artifact Registry
+      run: |-
+        docker push ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-    # - name: Deploy to Cloud Run
-    #   id: deploy
-    #   uses: 'google-github-actions/deploy-cloudrun@v2'
-    #   with:
-    #     service: ${{ env.SERVICE_NAME }}
-    #     region: ${{ env.GCP_REGION }}
-    #     image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-    #     secrets:
-    #       - name: DATABASE_HOST
-    #         value: ${{ secrets.DATABASE_HOST }}
-    #       - name: DATABASE_PORT
-    #         value: '5432'
-    #       - name: DATABASE_NAME
-    #         value: ${{ secrets.DATABASE_NAME }}
-    #       - name: DATABASE_USERNAME
-    #         value: ${{ secrets.DATABASE_USERNAME }}
-    #       - name: DATABASE_PASSWORD
-    #         value: ${{ secrets.DATABASE_PASSWORD }}
-    #       - name: DATABASE_SSL
-    #         value: 'true'
-    #       - name: GCS_BUCKET_NAME
-    #         value: ${{ secrets.GCS_BUCKET_NAME }}
-    #       - name: JWT_SECRET
-    #         value: ${{ secrets.JWT_SECRET }}
-    #       - name: ADMIN_JWT_SECRET
-    #         value: ${{ secrets.ADMIN_JWT_SECRET }}
-    #       - name: API_TOKEN_SALT
-    #         value: ${{ secrets.API_TOKEN_SALT }}
-    #       - name: APP_KEYS
-    #         value: ${{ secrets.APP_KEYS }}
+    - name: Deploy to Cloud Run
+      id: deploy
+      uses: 'google-github-actions/deploy-cloudrun@v2'
+      with:
+        service: ${{ env.SERVICE_NAME }}
+        region: ${{ env.GCP_REGION }}
+        image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        secrets:
+          - name: DATABASE_HOST
+            value: ${{ secrets.DATABASE_HOST }}
+          - name: DATABASE_PORT
+            value: '5432'
+          - name: DATABASE_NAME
+            value: ${{ secrets.DATABASE_NAME }}
+          - name: DATABASE_USERNAME
+            value: ${{ secrets.DATABASE_USERNAME }}
+          - name: DATABASE_PASSWORD
+            value: ${{ secrets.DATABASE_PASSWORD }}
+          - name: DATABASE_SSL
+            value: 'true'
+          - name: GCS_BUCKET_NAME
+            value: ${{ secrets.GCS_BUCKET_NAME }}
+          - name: JWT_SECRET
+            value: ${{ secrets.JWT_SECRET }}
+          - name: ADMIN_JWT_SECRET
+            value: ${{ secrets.ADMIN_JWT_SECRET }}
+          - name: API_TOKEN_SALT
+            value: ${{ secrets.API_TOKEN_SALT }}
+          - name: APP_KEYS
+            value: ${{ secrets.APP_KEYS }}
 
-    # - name: Output Cloud Run service URL
-    #   run: echo "Workflow simplified for debugging."
+    - name: Output Cloud Run service URL
+      run: echo "Cloud Run service URL: ${{ steps.deploy.outputs.url }}"

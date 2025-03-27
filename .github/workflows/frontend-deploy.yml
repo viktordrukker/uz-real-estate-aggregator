@@ -34,31 +34,31 @@ jobs:
         workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
         service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
 
-    # - name: Set up Cloud SDK
-    #   uses: 'google-github-actions/setup-gcloud@v2'
+    - name: Set up Cloud SDK
+      uses: 'google-github-actions/setup-gcloud@v2'
 
-    # - name: Configure Docker for Artifact Registry
-    #   run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
+    - name: Configure Docker for Artifact Registry
+      run: gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev
 
-    # - name: Build Docker image
-    #   working-directory: ./uz-real-estate-aggregator/frontend
-    #   run: |-
-    #     docker build . \
-    #       --build-arg NEXT_PUBLIC_STRAPI_API_URL=${{ secrets.NEXT_PUBLIC_STRAPI_API_URL_PROD }} \
-    #       --build-arg NEXT_PUBLIC_YANDEX_MAPS_API_KEY=${{ secrets.NEXT_PUBLIC_YANDEX_MAPS_API_KEY }} \
-    #       -t ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+    - name: Build Docker image
+      working-directory: ./uz-real-estate-aggregator/frontend
+      run: |-
+        docker build . \
+          --build-arg NEXT_PUBLIC_STRAPI_API_URL=${{ secrets.NEXT_PUBLIC_STRAPI_API_URL_PROD }} \
+          --build-arg NEXT_PUBLIC_YANDEX_MAPS_API_KEY=${{ secrets.NEXT_PUBLIC_YANDEX_MAPS_API_KEY }} \
+          -t ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-    # - name: Push Docker image to Artifact Registry
-    #   run: |-
-    #     docker push ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+    - name: Push Docker image to Artifact Registry
+      run: |-
+        docker push ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-    # - name: Deploy to Cloud Run
-    #   id: deploy
-    #   uses: 'google-github-actions/deploy-cloudrun@v2'
-    #   with:
-    #     service: ${{ env.SERVICE_NAME }}
-    #     region: ${{ env.GCP_REGION }}
-    #     image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+    - name: Deploy to Cloud Run
+      id: deploy
+      uses: 'google-github-actions/deploy-cloudrun@v2'
+      with:
+        service: ${{ env.SERVICE_NAME }}
+        region: ${{ env.GCP_REGION }}
+        image: ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-    # - name: Output Cloud Run service URL
-    #   run: echo "Workflow simplified for debugging."
+    - name: Output Cloud Run service URL
+      run: echo "Cloud Run service URL: ${{ steps.deploy.outputs.url }}"
