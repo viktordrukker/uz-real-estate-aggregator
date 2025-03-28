@@ -1,9 +1,8 @@
 name: Deploy Strapi Backend to Cloud Run
 
 on:
-  workflow_dispatch: # Allows manual triggering
   push:
-    branches: [main]
+    branches: [main, master]
     paths:
       - 'uz-real-estate-aggregator/backend/**'
       - '.github/workflows/backend-deploy.yml' # Also trigger on workflow changes

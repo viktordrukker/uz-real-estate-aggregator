@@ -76,66 +76,44 @@ async function getFilteredPropertiesForMap(params: Omit<GetPropertiesParams, 'pa
   const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_URL; // Use the correct env var name
   if (!strapiUrl) throw new Error("Missing NEXT_PUBLIC_STRAPI_URL environment variable");
   const { categoryId, locationId, listingType, minPrice, maxPrice, minRooms } = params;
-  const PAGE_SIZE_FOR_MAP = 100; // Fetch in chunks of 100
-
-  const baseQuery = {
+  
+  // Limit to first 5 properties to prevent excessive image loading
+  const MAX_MAP_PROPERTIES = 5;
+  
+  const query = {
     filters: {} as any,
     fields: ['id', 'documentId', 'coordinates'],
+    pagination: { page: 1, pageSize: MAX_MAP_PROPERTIES }, // Only fetch up to 5 properties
     populate: [],
   };
 
   // Build filters dynamically (same logic as getProperties)
-  if (listingType) baseQuery.filters.listingType = { $eq: listingType };
-  if (categoryId) baseQuery.filters.category = { id: { $eq: categoryId } };
-  if (locationId) baseQuery.filters.location = { id: { $eq: locationId } };
+  if (listingType) query.filters.listingType = { $eq: listingType };
+  if (categoryId) query.filters.category = { id: { $eq: categoryId } };
+  if (locationId) query.filters.location = { id: { $eq: locationId } };
   if (minPrice || maxPrice) {
-    baseQuery.filters.price = {};
-    if (minPrice) baseQuery.filters.price.$gte = minPrice;
-    if (maxPrice) baseQuery.filters.price.$lte = maxPrice;
+    query.filters.price = {};
+    if (minPrice) query.filters.price.$gte = minPrice;
+    if (maxPrice) query.filters.price.$lte = maxPrice;
   }
-  if (minRooms) baseQuery.filters.rooms = { $gte: minRooms };
+  if (minRooms) query.filters.rooms = { $gte: minRooms };
 
-  if (Object.keys(baseQuery.filters).length === 0) delete baseQuery.filters;
+  if (Object.keys(query.filters).length === 0) delete query.filters;
 
-  let allProperties: Pick<Property, 'id' | 'documentId' | 'coordinates'>[] = [];
-  let currentPage = 1;
-  let pageCount = 1; // Assume at least one page initially
-
-  console.log("Fetching all map properties iteratively...");
+  console.log("Fetching limited map properties...");
 
   try {
-    do {
-      const query = {
-        ...baseQuery,
-        pagination: {
-          page: currentPage,
-          pageSize: PAGE_SIZE_FOR_MAP,
-        },
-      };
-      const queryString = qs.stringify(query, { encodeValuesOnly: true });
-      const apiUrl = `${strapiUrl}/api/properties?${queryString}`;
-      // console.log(` Fetching map page ${currentPage}...`);
+    const queryString = qs.stringify(query, { encodeValuesOnly: true });
+    const apiUrl = `${strapiUrl}/api/properties?${queryString}`;
+    
+    const res = await fetch(apiUrl, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`Failed to fetch map properties: ${res.status} ${res.statusText}`);
 
-      const res = await fetch(apiUrl, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`Failed to fetch map properties page ${currentPage}: ${res.status} ${res.statusText}`);
-
-      const responseData: PropertiesApiResponse = await res.json();
-
-      if (responseData.data && responseData.data.length > 0) {
-        allProperties = allProperties.concat(responseData.data);
-      }
-
-      // Update pageCount from the first response, then increment currentPage
-      if (currentPage === 1) {
-        pageCount = responseData.meta?.pagination?.pageCount || 1;
-      }
-      currentPage++;
-
-    } while (currentPage <= pageCount);
-
-    console.log(`Fetched ${allProperties.length} total properties for map across ${pageCount} page(s).`);
-    return allProperties;
-
+    const responseData: PropertiesApiResponse = await res.json();
+    const properties = responseData.data || [];
+    
+    console.log(`Fetched ${properties.length} properties for map (limited to ${MAX_MAP_PROPERTIES}).`);
+    return properties;
   } catch (error) {
     console.error("Error fetching map properties:", error);
     return []; // Return empty array on error

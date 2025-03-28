@@ -31,9 +31,9 @@ export const FavoritesProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
 
     setIsLoading(true);
-    const apiUrlBase = process.env.NEXT_PUBLIC_STRAPI_API_URL; // Use correct env var
+    const apiUrlBase = process.env.NEXT_PUBLIC_STRAPI_URL; // Use standardized env var
     if (!apiUrlBase) {
-      console.error("Error: NEXT_PUBLIC_STRAPI_API_URL environment variable is not set.");
+      console.error("Error: NEXT_PUBLIC_STRAPI_URL environment variable is not set.");
       setIsLoading(false);
       return; // Exit if URL is missing
     }
@@ -73,7 +73,7 @@ export const FavoritesProvider: React.FC<{ children: ReactNode }> = ({ children 
   const addFavorite = useCallback(async (propertyId: number) => {
     if (!user || !jwt) throw new Error("User not authenticated");
 
-    const apiUrlBase = process.env.NEXT_PUBLIC_STRAPI_API_URL; // Use correct env var
+    const apiUrlBase = process.env.NEXT_PUBLIC_STRAPI_URL; // Use standardized env var
     if (!apiUrlBase) throw new Error("API URL configuration error.");
 
     const response = await fetch(`${apiUrlBase}/api/favorites`, {
@@ -99,7 +99,7 @@ export const FavoritesProvider: React.FC<{ children: ReactNode }> = ({ children 
     if (!user || !jwt) throw new Error("User not authenticated");
 
     // Note: Using the custom DELETE endpoint
-    const apiUrlBase = process.env.NEXT_PUBLIC_STRAPI_API_URL; // Use correct env var
+    const apiUrlBase = process.env.NEXT_PUBLIC_STRAPI_URL; // Use standardized env var
     if (!apiUrlBase) throw new Error("API URL configuration error.");
 
     const response = await fetch(`${apiUrlBase}/api/favorites/property/${propertyId}`, {

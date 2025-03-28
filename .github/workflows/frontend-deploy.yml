@@ -1,9 +1,8 @@
 name: Deploy Next.js Frontend to Cloud Run
 
 on:
-  workflow_dispatch: # Allows manual triggering
   push:
-    branches: [main]
+    branches: [main, master]
     paths:
       - 'uz-real-estate-aggregator/frontend/**'
       - '.github/workflows/frontend-deploy.yml' # Also trigger on workflow changes

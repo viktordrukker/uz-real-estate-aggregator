@@ -224,6 +224,35 @@ This document tracks key technical findings, decisions, and workarounds encounte
 
 ---
 
+**Date:** 2025-03-28
+
+**Topic:** Property Details Page Fetch Errors in Production
+
+**Issue:** After standardizing the environment variables, the property details page still had fetch errors in production with `TypeError: Failed to fetch` errors occurring at the client-side fetch call in the property details page.
+
+**Investigation:**
+1. The property details page was using client-side fetching with the `useEffect` hook to load property data, which was causing the fetch error in the production environment.
+2. In contrast, the main page was using server-side data fetching which was working correctly even in production.
+3. The error occurred because the client-side fetching wasn't handling certain network conditions or CORS issues correctly in the production environment.
+
+**Resolution:**
+1. Refactored the property details page to use Next.js server-side data fetching pattern:
+   - Created a server component in `[documentId]/page.tsx` that fetches the property data server-side
+   - Moved the client-side interactive logic to a separate client component (`client.tsx`)
+   - Passed the pre-fetched property data from the server component to the client component
+   - Added better error handling for server-side fetch errors
+
+2. The server component uses `fetch` with the following improvements:
+   - Added proper headers
+   - Used `cache: 'no-store'` to ensure fresh data
+   - Implemented comprehensive error handling
+
+**Outcome:** The property details page now reliably loads data in production without client-side fetch errors. This approach leverages Next.js built-in server components for better performance and reliability.
+
+**Decision:** Adopt the server-side data fetching pattern for all routes that require reliable data loading, especially for critical page content. Use client components only for interactive elements that need access to browser APIs or React hooks.
+
+---
+
 **IMPORTANT!!! General Project Rules & Notes:**
 
 *   **Initial State:** Assume both backend (Strapi) and frontend (Next.js) servers are initially down. They need to be started manually (e.g., `npm run develop` / `npm run dev`).
