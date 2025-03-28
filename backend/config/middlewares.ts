@@ -9,8 +9,12 @@ export default [
       enabled: true,
       headers: '*', // Allow all headers
       // Allow requests from localhost:3000 (frontend dev server)
-      // and the deployed frontend URL
-      origin: ['http://localhost:3000', 'https://uz-rea-frontend-m3kpztxi4a-ew.a.run.app'],
+      // and the deployed frontend URLs
+      origin: [
+        'http://localhost:3000',
+        'https://uz-rea-frontend-480221447899.europe-west1.run.app', // From error
+        'https://uz-rea-frontend-m3kpztxi4a-ew.a.run.app' // Other potential URL
+      ],
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
       credentials: true, // Allow cookies/auth headers
     },

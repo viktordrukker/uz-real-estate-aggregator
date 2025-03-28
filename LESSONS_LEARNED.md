@@ -167,6 +167,36 @@ This document tracks key technical findings, decisions, and workarounds encounte
 
 ---
 
+**Date:** 2025-03-28
+
+**Topic:** CORS Errors After Cloud Run Deployment
+
+**Issue:** After deploying the frontend and backend to Cloud Run, the frontend received CORS errors (`No 'Access-Control-Allow-Origin' header`) and 403 Forbidden errors when trying to fetch data from the backend API (`/api/categories`, `/api/locations`, etc.).
+
+**Investigation:**
+1.  Checked the browser console logs, confirming the CORS block and the specific origin making the request (`https://uz-rea-frontend-480221447899.europe-west1.run.app`).
+2.  Examined the backend CORS configuration in `backend/config/middlewares.ts`. It initially only allowed `http://localhost:3000`.
+3.  Attempted adding the generic backend URL (`https://uz-rea-frontend-m3kpztxi4a-ew.a.run.app`) to the `origin` array, but the error persisted.
+4.  Realized the Cloud Run default URL includes the project ID (`480221447899` in this case) which was missing from the initially added origin.
+
+**Resolution:**
+1.  Updated the `origin` array in `backend/config/middlewares.ts` to explicitly include the correct frontend URL reported by the browser: `https://uz-rea-frontend-480221447899.europe-west1.run.app`. Also kept the other potential URL for robustness.
+    ```javascript
+    origin: [
+      'http://localhost:3000',
+      'https://uz-rea-frontend-480221447899.europe-west1.run.app', // From error
+      'https://uz-rea-frontend-m3kpztxi4a-ew.a.run.app' // Other potential URL
+    ],
+    ```
+2.  Committed the change and pushed, triggering a backend redeployment.
+3.  After the backend redeployed, the frontend was able to successfully fetch data.
+
+**Outcome:** CORS errors were resolved by ensuring the exact frontend Cloud Run URL (including the project ID) was listed in the backend's allowed origins. The 403 error was a side effect of the failed CORS preflight request.
+
+**Decision:** Always verify the exact origin URL reported by the browser's CORS error message when configuring backend CORS policies, especially with auto-generated cloud service URLs.
+
+---
+
 **IMPORTANT!!! General Project Rules & Notes:**
 
 *   **Initial State:** Assume both backend (Strapi) and frontend (Next.js) servers are initially down. They need to be started manually (e.g., `npm run develop` / `npm run dev`).
