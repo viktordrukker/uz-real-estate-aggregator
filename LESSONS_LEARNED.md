@@ -1,4 +1,4 @@
-# Lessons Learned: Uzbekistan Real Estate Aggregator
+SSo# Lessons Learned: Uzbekistan Real Estate Aggregator
 
 This document tracks key technical findings, decisions, and workarounds encountered during the development process.
 
@@ -287,6 +287,68 @@ This document tracks key technical findings, decisions, and workarounds encounte
 **Outcome:** Images uploaded through the Strapi admin panel are now correctly stored in GCS and accessible through the API. The bucket CORS configuration allows browser-based uploads, and the service account has the necessary permissions to write to the bucket.
 
 **Decision:** Standardized GCS configuration and documented the setup process in detail to prevent similar issues in the future. Added the service account key instructions to the deployment guide.
+
+---
+
+**Date:** 2025-03-28
+
+**Topic:** Image Processing and Thumbnail Generation Issues in Strapi
+
+**Issue:** While the original images were being successfully uploaded to Google Cloud Storage, the thumbnails and image transformations were not being generated, resulting in 404 errors when trying to access them.
+
+**Investigation:**
+1. Analyzed the Docker configuration and found it was using Alpine-based Node.js images, which lack many of the necessary system dependencies for image processing with Sharp.
+2. Reviewed the Cloud Run logs and found errors related to image processing libraries.
+3. Examined the frontend components and found they were not properly handling missing image formats, leading to broken images in the UI.
+4. Checked the GCS provider configuration and found it didn't have explicit settings for transformations.
+
+**Resolution:**
+1. Updated the Dockerfile to:
+   - Switch from Alpine to Debian-based Node.js images
+   - Install essential image processing dependencies (build-essential, libvips, libpng, etc.)
+   - Ensure both build and production stages have the necessary libraries
+
+2. Enhanced the GCS provider configuration:
+   - Explicitly enabled transformations with `enableTransformations: true`
+   - Specified the transformations path with `transformationsPath: 'formats'`
+   - Added caching headers for better performance
+   - Enabled debug mode for troubleshooting
+
+3. Improved frontend image handling:
+   - Added better fallback logic in PropertyCard and property details components
+   - Implemented a cascading format selection (trying medium → small → thumbnail → original)
+   - Added more robust error handling with console logging
+   - Ensured all image components had proper fallback options
+
+**Outcome:** After these changes, the image processing is now working correctly in the production environment. Thumbnails are being generated and displayed properly in the frontend, with graceful fallbacks when certain formats are unavailable.
+
+**Decision:** Always use full Debian-based images for Node.js applications that require image processing capabilities, and ensure proper fallback mechanisms in the frontend for handling partial or missing image transformations.
+
+---
+
+**Date:** 2025-03-28
+
+**Topic:** URL Construction Issues in Frontend Image Rendering
+
+**Issue:** Images were not displaying in the frontend, with errors showing malformed URLs like `https://uz-rea-backend-480221447899.europe-west1.run.apphttps://storage.googleapis.com/uz-aggregator-show-strapi-media/large_interior_3_bd412fe52b.jpeg` - the backend URL was being concatenated with the storage URL without any separator.
+
+**Investigation:**
+1. Examined browser console errors and found references to malformed image URLs with two domains concatenated.
+2. Reviewed the `PropertyCard.tsx` and `client.tsx` components, which were constructing image URLs incorrectly.
+3. Found that the code was assuming all image URLs were relative paths and always prefixing them with the Strapi backend URL.
+4. Determined that the image URLs returned from the Strapi API were sometimes absolute URLs (starting with `http(s)://`) but were still being prefixed.
+
+**Resolution:**
+1. Added a URL construction helper function `getImageUrl()` in both components that:
+   - Checks if URLs already start with "http" and leaves them as-is
+   - Only prepends the backend URL if the path is relative
+   - Handles empty or missing values with a base64 encoded SVG placeholder
+2. Implemented a proper inline SVG placeholder to ensure a fallback is always available
+3. Refactored all image URL construction to use this helper function
+
+**Outcome:** Images now display correctly throughout the application. The code properly handles both absolute and relative URLs from the API, eliminating the malformed URL errors.
+
+**Decision:** Always check if a URL is absolute before prepending a domain, and use inline SVG data URIs for placeholder images rather than relative paths to ensure they're always available.
 
 ---
 
