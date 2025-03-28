@@ -104,7 +104,57 @@ Review the `.github/workflows/backend-deploy.yml` and `.github/workflows/fronten
 *   Ensure the chosen authentication method (WIF or SA Key) is correctly configured in the `Authenticate to Google Cloud` step.
 *   Verify that all necessary environment variables and secrets are correctly referenced in the `Deploy to Cloud Run` steps.
 
-## 4. Trigger Deployment
+## 4. CI/CD Pipeline Overview (GitHub Actions)
+
+This project uses GitHub Actions for Continuous Integration and Continuous Deployment (CI/CD). Two separate workflows are defined in the `.github/workflows/` directory:
+
+*   `backend-deploy.yml`: Handles the deployment of the Strapi backend.
+*   `frontend-deploy.yml`: Handles the deployment of the Next.js frontend.
+
+### Workflow Triggers
+
+Both workflows are triggered automatically on:
+
+1.  **Push to `main` branch:**
+    *   The backend workflow runs if changes are detected within the `uz-real-estate-aggregator/backend/` directory or the workflow file itself (`.github/workflows/backend-deploy.yml`).
+    *   The frontend workflow runs if changes are detected within the `uz-real-estate-aggregator/frontend/` directory or the workflow file itself (`.github/workflows/frontend-deploy.yml`).
+2.  **Manual Dispatch (`workflow_dispatch`):** Both workflows can be manually triggered from the GitHub Actions tab in the repository.
+
+### Authentication
+
+*   The workflows authenticate to Google Cloud using **Workload Identity Federation (WIF)**.
+*   This requires the `GCP_WORKLOAD_IDENTITY_PROVIDER` and `GCP_SERVICE_ACCOUNT_EMAIL` secrets to be configured in GitHub secrets.
+*   The `github-actions-deployer@<project-id>.iam.gserviceaccount.com` service account in GCP is granted the necessary roles (`Cloud Run Admin`, `Storage Admin`, `Artifact Registry Writer`, `Service Account User`) to perform deployment tasks.
+*   WIF allows GitHub Actions to securely impersonate the GCP service account without needing long-lived service account keys stored in GitHub.
+
+### Key Steps (Common to both workflows)
+
+1.  **Checkout Code:** Downloads the latest code from the `main` branch.
+2.  **Authenticate to Google Cloud:** Uses WIF to get temporary GCP credentials.
+3.  **Set up Cloud SDK:** Installs and configures the `gcloud` CLI in the runner environment.
+4.  **Configure Docker:** Configures Docker to authenticate with the Google Artifact Registry repository in the specified region (`europe-west1`).
+5.  **Build Docker Image:**
+    *   Builds the Docker image using the `Dockerfile` located in the respective `backend` or `frontend` directory.
+    *   The `working-directory` is set correctly for each build.
+    *   **Frontend Specific:** Build arguments (`NEXT_PUBLIC_STRAPI_API_URL`, `NEXT_PUBLIC_YANDEX_MAPS_API_KEY`) are passed during the build using GitHub secrets. This means the frontend needs to be rebuilt and redeployed if the backend URL changes.
+    *   The image is tagged with the GCP region, project ID, repository name, image name, and the Git commit SHA for traceability.
+6.  **Push Docker Image:** Pushes the built image to the corresponding Artifact Registry repository (`uz-rea-backend-repo` or `uz-rea-frontend-repo`).
+7.  **Deploy to Cloud Run:**
+    *   Deploys the newly pushed image to the target Cloud Run service (`uz-rea-backend` or `uz-rea-frontend`) in the specified region (`europe-west1`).
+    *   **Backend Specific:** Environment variables required by Strapi (database credentials, GCS bucket, JWT secrets, etc.) are injected into the Cloud Run service using the `env_vars` parameter, sourcing values from GitHub secrets. `NODE_ENV` is explicitly set to `production`.
+8.  **Output URL:** Prints the URL of the deployed Cloud Run service to the workflow logs.
+
+### Deployment Process & Dependencies
+
+1.  Changes pushed to `main` trigger the relevant workflow(s).
+2.  The backend workflow builds and deploys the Strapi API.
+3.  **Manual Step:** After the *first successful* backend deployment, its public URL must be copied from the workflow output.
+4.  **Manual Step:** The `NEXT_PUBLIC_STRAPI_API_URL_PROD` secret in GitHub must be updated with the backend URL.
+5.  The frontend workflow (either triggered by its own changes or re-run manually after updating the secret) builds using the correct backend URL and deploys the Next.js application.
+6.  The frontend Cloud Run service (`uz-rea-frontend`) has been configured to allow unauthenticated access (`roles/run.invoker` for `allUsers`).
+7.  The backend Cloud Run service (`uz-rea-backend`) has also been temporarily configured to allow unauthenticated access for initial setup/CMS access. **This should be secured (e.g., using IAP) before production use.**
+
+## 5. Trigger Deployment
 
 Once the GCP resources are created and GitHub secrets are set, pushing changes to the `main` branch (or the branch specified in the `on:` trigger) for the respective `backend` or `frontend` paths should automatically trigger the GitHub Actions workflows to build and deploy the applications to Cloud Run. Monitor the "Actions" tab in your GitHub repository for progress and logs.
 
