@@ -7,7 +7,11 @@ import { useAuth } from '@/context/AuthContext'; // Import useAuth hook
 // Function to handle the login API call
 const handleLogin = async (identifier: string, password: string): Promise<any> => {
   console.log('Attempting login with:', { identifier, password });
-  const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337'; // Use NEXT_PUBLIC_ prefix if needed client-side
+  const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_URL; // Use correct env var
+  if (!strapiUrl) {
+    console.error("Error: NEXT_PUBLIC_STRAPI_URL environment variable is not set.");
+    throw new Error("API URL configuration error.");
+  }
 
   try {
     const res = await fetch(`${strapiUrl}/api/auth/local`, {

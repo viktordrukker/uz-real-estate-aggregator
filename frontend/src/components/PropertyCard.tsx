@@ -21,8 +21,9 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, initialIsFavorite
 
   // Get the URL for the primary image (using flat structure)
   const firstImage = property.images?.[0];
-  const imageUrl = firstImage
-    ? `${process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337'}${firstImage.formats?.small?.url || firstImage.url}`
+  const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_URL; // Use correct env var
+  const imageUrl = firstImage && strapiUrl
+    ? `${strapiUrl}${firstImage.formats?.small?.url || firstImage.url}`
     : '/placeholder.png';
 
   const { user } = useAuth();

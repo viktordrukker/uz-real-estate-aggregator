@@ -1,7 +1,5 @@
 'use client';
 
-'use client';
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/context/FavoritesContext';
@@ -10,8 +8,6 @@ import PropertyCardSkeleton from '@/components/PropertyCardSkeleton'; // Import 
 import Link from 'next/link';
 import { stringify } from 'qs';
 import { Property } from '@/types'; // Import shared type
-
-// Remove local Property interface definition
 
 export default function FavoritesPage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -44,7 +40,13 @@ export default function FavoritesPage() {
     const fetchFavoriteProperties = async () => {
       setPageLoading(true);
       setError(null);
-      const apiUrlBase = process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337';
+      const apiUrlBase = process.env.NEXT_PUBLIC_STRAPI_API_URL; // Use correct env var
+      if (!apiUrlBase) {
+        console.error("Error: NEXT_PUBLIC_STRAPI_API_URL environment variable is not set.");
+        setError("API URL configuration error.");
+        setPageLoading(false);
+        return; // Exit if URL is missing
+      }
 
       // Use qs to build the query for fetching multiple properties by ID
       const query = stringify({
@@ -52,7 +54,7 @@ export default function FavoritesPage() {
           id: { $in: favoriteIdArray },
         },
         // Add any necessary population for PropertyCard here if needed later
-        // populate: { category: true, location: true }
+        populate: ['category', 'location', 'images', 'amenities'] // Populate necessary fields for PropertyCard
       }, { encodeValuesOnly: true });
 
       try {

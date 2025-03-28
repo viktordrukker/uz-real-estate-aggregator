@@ -34,7 +34,12 @@ const PropertyFilters: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
-      const apiUrlBase = process.env.NEXT_PUBLIC_STRAPI_API_URL || 'http://localhost:1337';
+      const apiUrlBase = process.env.NEXT_PUBLIC_STRAPI_API_URL;
+      if (!apiUrlBase) {
+        console.error("Error: NEXT_PUBLIC_STRAPI_URL environment variable is not set.");
+        setIsLoading(false); // Stop loading if URL is missing
+        return; // Exit if URL is missing
+      }
       try {
         const [catRes, locRes] = await Promise.all([
           fetch(`${apiUrlBase}/api/categories`),
