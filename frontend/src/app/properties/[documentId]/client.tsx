@@ -23,8 +23,27 @@ export default function ClientPropertyDetails({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  // A base64 encoded SVG placeholder image
+  const placeholderImage = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2UwZTBlMCIvPjx0ZXh0IHg9IjQwIiB5PSIxMDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzQ0NDQ0NCI+SW1hZ2Ugbm90IGF2YWlsYWJsZTwvdGV4dD48L3N2Zz4=";
+
   const { user } = useAuth();
   const { isFavorited, addFavorite, removeFavorite, isLoading: favoritesLoading } = useFavorites();
+
+  // Helper function to construct proper image URL
+  const getImageUrl = (image: any) => {
+    if (!image) return placeholderImage;
+    
+    // Select the best available format
+    const imageUrl = image.formats?.medium?.url || 
+                    image.formats?.small?.url || 
+                    image.formats?.thumbnail?.url || 
+                    image.url;
+    
+    // If URL is already absolute, use it directly, otherwise prepend the API base URL
+    return imageUrl?.startsWith('http') 
+           ? imageUrl 
+           : imageUrl ? `${process.env.NEXT_PUBLIC_STRAPI_URL}${imageUrl}` : placeholderImage;
+  };
 
   useEffect(() => {
     // Set initial property from props
@@ -34,22 +53,10 @@ export default function ClientPropertyDetails({
       // Set initial selected image if images exist
       if (initialProperty.images && initialProperty.images.length > 0) {
         const firstImage = initialProperty.images[0];
-        const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_URL;
-        if (strapiUrl) {
-          // Try multiple formats with fallbacks
-          const imageUrl = `${strapiUrl}${
-            firstImage.formats?.medium?.url || 
-            firstImage.formats?.small?.url || 
-            firstImage.formats?.thumbnail?.url || 
-            firstImage.url
-          }`;
-          
-          console.log(`Setting initial image URL: ${imageUrl}`);
-          setSelectedImageUrl(imageUrl);
-        } else {
-          console.error("Error: NEXT_PUBLIC_STRAPI_URL environment variable is not set for image URL.");
-          setSelectedImageUrl('/placeholder.png'); // Fallback placeholder
-        }
+        const imageUrl = getImageUrl(firstImage);
+        
+        console.log(`Setting initial image URL: ${imageUrl}`);
+        setSelectedImageUrl(imageUrl);
       }
     } else {
       setError('Property not found.');
@@ -78,20 +85,8 @@ export default function ClientPropertyDetails({
 
   const openModal = (index: number) => {
     if (!property?.images) return;
-    const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_URL;
-    if (!strapiUrl) {
-        console.error("Error: NEXT_PUBLIC_STRAPI_URL environment variable is not set for modal image URL.");
-        return;
-    }
     const image = property.images[index];
-    
-    // Try multiple formats with fallbacks for best image quality
-    const imageUrl = `${strapiUrl}${
-      image.formats?.large?.url || 
-      image.formats?.medium?.url || 
-      image.formats?.small?.url || 
-      image.url
-    }`;
+    const imageUrl = getImageUrl(image);
     
     console.log(`Opening modal with image: ${imageUrl}`);
     setSelectedImageUrl(imageUrl);
@@ -107,17 +102,8 @@ export default function ClientPropertyDetails({
   const showNextImage = () => {
     if (!property?.images) return;
     const newIndex = (currentImageIndex + 1) % property.images.length;
-    const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_URL;
-    if (!strapiUrl) return;
     const newImage = property.images[newIndex];
-    
-    // Try multiple formats with fallbacks for best image quality
-    const newImageUrl = `${strapiUrl}${
-      newImage.formats?.large?.url || 
-      newImage.formats?.medium?.url || 
-      newImage.formats?.small?.url || 
-      newImage.url
-    }`;
+    const newImageUrl = getImageUrl(newImage);
     
     console.log(`Navigating to next image: ${newImageUrl}`);
     setSelectedImageUrl(newImageUrl);
@@ -127,17 +113,8 @@ export default function ClientPropertyDetails({
   const showPrevImage = () => {
     if (!property?.images) return;
     const newIndex = (currentImageIndex - 1 + property.images.length) % property.images.length;
-    const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_URL;
-    if (!strapiUrl) return;
     const newImage = property.images[newIndex];
-    
-    // Try multiple formats with fallbacks for best image quality
-    const newImageUrl = `${strapiUrl}${
-      newImage.formats?.large?.url || 
-      newImage.formats?.medium?.url || 
-      newImage.formats?.small?.url || 
-      newImage.url
-    }`;
+    const newImageUrl = getImageUrl(newImage);
     
     console.log(`Navigating to previous image: ${newImageUrl}`);
     setSelectedImageUrl(newImageUrl);
@@ -172,7 +149,7 @@ export default function ClientPropertyDetails({
               onClick={() => openModal(currentImageIndex)}
               onError={(e) => { 
                 console.error(`Failed to load image: ${selectedImageUrl}`);
-                (e.target as HTMLImageElement).src = '/placeholder.png'; 
+                (e.target as HTMLImageElement).src = placeholderImage; 
               }}
             />
           ) : (
@@ -184,23 +161,25 @@ export default function ClientPropertyDetails({
           {property.images && property.images.length > 1 && (
             <div className="flex space-x-2 p-2 bg-gray-100 overflow-x-auto">
               {property.images.map((image: StrapiMedia, index: number) => {
-                const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_URL;
-                if (!strapiUrl) return null; // Skip if URL missing
+                // Get thumbnail and main image URLs using our helper function
+                const thumbnailUrl = getImageUrl({
+                  formats: {
+                    thumbnail: { url: image.formats?.thumbnail?.url },
+                    small: { url: image.formats?.small?.url }
+                  },
+                  url: image.url
+                });
                 
-                // Get best available thumbnail format
-                const thumbnailUrl = `${strapiUrl}${
-                  image.formats?.thumbnail?.url || 
-                  image.formats?.small?.url || 
-                  image.url
-                }`;
+                const mainImageUrl = getImageUrl({
+                  formats: {
+                    medium: { url: image.formats?.medium?.url },
+                    small: { url: image.formats?.small?.url }
+                  },
+                  url: image.url
+                });
                 
-                // Get best available main image format
-                const mainImageUrl = `${strapiUrl}${
-                  image.formats?.medium?.url || 
-                  image.formats?.small?.url || 
-                  image.url
-                }`;
-                const isSelected = selectedImageUrl === mainImageUrl; // Compare with currently displayed main image URL
+                const isSelected = selectedImageUrl === mainImageUrl;
+                
                 return (
                   <img
                     key={image.id}
@@ -214,7 +193,7 @@ export default function ClientPropertyDetails({
                     onError={(e) => { 
                       console.error(`Failed to load thumbnail: ${thumbnailUrl}`);
                       (e.target as HTMLImageElement).style.display = 'none'; 
-                    }} // Hide broken thumbnails
+                    }}
                   />
                 );
               })}

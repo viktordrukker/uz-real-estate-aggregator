@@ -19,24 +19,29 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, initialIsFavorite
     return null;
   }
 
+  // A base64 encoded SVG placeholder image
+  const placeholderImage = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2UwZTBlMCIvPjx0ZXh0IHg9IjQwIiB5PSIxMDAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzQ0NDQ0NCI+SW1hZ2Ugbm90IGF2YWlsYWJsZTwvdGV4dD48L3N2Zz4=";
+  
   // Get the URL for the primary image with better fallback handling
   const firstImage = property.images?.[0];
-  const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_URL; // Use correct env var
   
   // Function to generate image URL with format fallbacks
   const getImageUrl = () => {
-    if (!firstImage || !strapiUrl) return '/placeholder.png';
+    if (!firstImage) return placeholderImage;
     
-    // Try to get the URL in order of preference: small format, medium format, original
-    const imageUrl = `${strapiUrl}${
-      firstImage.formats?.small?.url || 
-      firstImage.formats?.medium?.url || 
-      firstImage.formats?.thumbnail?.url || 
-      firstImage.url
-    }`;
+    // Check if the URL is already absolute (starts with http)
+    const imageUrl = firstImage.formats?.small?.url || 
+                     firstImage.formats?.medium?.url || 
+                     firstImage.formats?.thumbnail?.url || 
+                     firstImage.url;
     
-    console.log(`Loading image for property ${property.id}: ${imageUrl}`);
-    return imageUrl;
+    // If URL is already absolute, use it directly, otherwise prepend the API base URL
+    const finalUrl = imageUrl?.startsWith('http') 
+                   ? imageUrl 
+                   : imageUrl ? `${process.env.NEXT_PUBLIC_STRAPI_URL}${imageUrl}` : placeholderImage;
+    
+    console.log(`Loading image for property ${property.id}: ${finalUrl}`);
+    return finalUrl;
   };
 
   const imageUrl = getImageUrl();
@@ -103,7 +108,7 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, initialIsFavorite
           className="w-full h-full object-cover"
           onError={(e) => { 
             console.log(`Image failed to load, falling back to placeholder: ${imageUrl}`); 
-            (e.target as HTMLImageElement).src = '/placeholder.png'; 
+            (e.target as HTMLImageElement).src = placeholderImage; 
           }}
         />
       </div>
