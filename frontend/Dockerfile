@@ -19,11 +19,13 @@ FROM base AS build
 
 # Set build-time environment variables (can be overridden at build time)
 ARG NEXT_PUBLIC_STRAPI_URL=http://localhost:1337 # Match code variable name
+ARG NEXT_PUBLIC_STRAPI_API_URL=${NEXT_PUBLIC_STRAPI_URL} # Add alias for build compatibility
 ARG NEXT_PUBLIC_YANDEX_MAPS_API_KEY
 
 # Set environment variables for the build process
 ENV NODE_ENV=production
 ENV NEXT_PUBLIC_STRAPI_URL=${NEXT_PUBLIC_STRAPI_URL}
+ENV NEXT_PUBLIC_STRAPI_API_URL=${NEXT_PUBLIC_STRAPI_API_URL}
 ENV NEXT_PUBLIC_YANDEX_MAPS_API_KEY=${NEXT_PUBLIC_YANDEX_MAPS_API_KEY}
 
 # Build the Next.js application

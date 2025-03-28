@@ -197,6 +197,33 @@ This document tracks key technical findings, decisions, and workarounds encounte
 
 ---
 
+**Date:** 2025-03-28
+
+**Topic:** Environment Variable Naming Inconsistencies
+
+**Issue:** The frontend application wasn't loading property data from the backend. The console showed errors: "NEXT_PUBLIC_STRAPI_URL environment variable is not set" despite the variable being set in the .env.local file.
+
+**Investigation:**
+1. Found inconsistent environment variable naming across the codebase:
+   - Main page.tsx used `NEXT_PUBLIC_STRAPI_URL` 
+   - PropertyFilters.tsx used `NEXT_PUBLIC_STRAPI_API_URL`
+   - Property details page used a mix of both variables
+   - The GitHub Actions workflow used `NEXT_PUBLIC_STRAPI_API_URL` for the Docker build argument
+   - The Dockerfile had `NEXT_PUBLIC_STRAPI_URL` but was missing the additional variable
+
+**Resolution:**
+1. Standardized all code to use `NEXT_PUBLIC_STRAPI_URL` as the consistent environment variable name:
+   - Updated PropertyFilters.tsx to use `NEXT_PUBLIC_STRAPI_URL`
+   - Updated property details page to use `NEXT_PUBLIC_STRAPI_URL` throughout
+   - Modified the GitHub Actions workflow to pass the value using the correct variable name
+   - Updated the Dockerfile to handle both variable names for backward compatibility with CI/CD
+
+**Outcome:** The frontend now correctly connects to the backend API, with properties loading on the homepage and property details pages.
+
+**Decision:** Standardized on `NEXT_PUBLIC_STRAPI_URL` for all environment variable references. Added documentation to improve clarity for future development.
+
+---
+
 **IMPORTANT!!! General Project Rules & Notes:**
 
 *   **Initial State:** Assume both backend (Strapi) and frontend (Next.js) servers are initially down. They need to be started manually (e.g., `npm run develop` / `npm run dev`).

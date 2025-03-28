@@ -27,7 +27,8 @@ interface PaginationMetadata {
 
 // Fetches paginated properties for the list view
 async function getProperties(params: GetPropertiesParams = {}): Promise<{ properties: Property[], pagination: PaginationMetadata }> {
-  const strapiUrl = process.env.STRAPI_URL || 'http://localhost:1337';
+  const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_URL; // Use the correct env var name
+  if (!strapiUrl) throw new Error("Missing NEXT_PUBLIC_STRAPI_URL environment variable");
   const { page = 1, pageSize = 12, categoryId, locationId, listingType, minPrice, maxPrice, minRooms } = params;
 
   const query = {
@@ -72,7 +73,8 @@ async function getProperties(params: GetPropertiesParams = {}): Promise<{ proper
 
 // Function to fetch coordinates and IDs for ALL filtered properties (for map) using iterative fetching
 async function getFilteredPropertiesForMap(params: Omit<GetPropertiesParams, 'page' | 'pageSize'>): Promise<Pick<Property, 'id' | 'documentId' | 'coordinates'>[]> {
-  const strapiUrl = process.env.STRAPI_URL || 'http://localhost:1337';
+  const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_URL; // Use the correct env var name
+  if (!strapiUrl) throw new Error("Missing NEXT_PUBLIC_STRAPI_URL environment variable");
   const { categoryId, locationId, listingType, minPrice, maxPrice, minRooms } = params;
   const PAGE_SIZE_FOR_MAP = 100; // Fetch in chunks of 100
 
@@ -142,7 +144,8 @@ async function getFilteredPropertiesForMap(params: Omit<GetPropertiesParams, 'pa
 
 
 async function getTotalPropertyCount(): Promise<number> {
-  const strapiUrl = process.env.STRAPI_URL || 'http://localhost:1337';
+  const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_URL; // Use the correct env var name
+  if (!strapiUrl) throw new Error("Missing NEXT_PUBLIC_STRAPI_URL environment variable");
   // This function should fetch the overall total, independent of filters applied to the list/map
   const query = qs.stringify({ pagination: { pageSize: 1 } }, { encodeValuesOnly: true });
   const apiUrl = `${strapiUrl}/api/properties?${query}`;
