@@ -253,6 +253,43 @@ This document tracks key technical findings, decisions, and workarounds encounte
 
 ---
 
+**Date:** 2025-03-28
+
+**Topic:** Google Cloud Storage (GCS) Image Upload Issues
+
+**Issue:** Images uploaded through the Strapi admin panel were not being stored correctly in Google Cloud Storage. The upload operation would appear to succeed in the UI, but images would not be available through the API or visible in the bucket.
+
+**Investigation:**
+1. Examined the GCS provider configuration in `backend/config/env/production/plugins.ts` and found it was correctly implementing `@3akram/strapi-provider-upload-google-cloud-storage`.
+2. Discovered that the GCS service account credentials were not being passed in the GitHub Actions workflow to the Cloud Run environment, despite having a `GCS_BUCKET_NAME` variable.
+3. Checked the Cloud Run logs and found authentication errors indicating the service couldn't access the GCS bucket.
+4. Reviewed the bucket permissions and identified potential CORS issues blocking browser-based uploads.
+
+**Resolution:**
+1. Updated GitHub Actions workflow to include all required GCS environment variables:
+   ```yaml
+   env_vars: |
+     GCS_BUCKET_NAME=${{ secrets.GCS_BUCKET_NAME }}
+     GCS_SERVICE_ACCOUNT_KEY_JSON=${{ secrets.GCS_SERVICE_ACCOUNT_KEY_JSON }}
+     GCS_PUBLIC_FILES=true
+     GCS_UNIFORM=false
+   ```
+2. Created a setup script (`setup-gcs-bucket.sh`) to configure the bucket with proper permissions and CORS settings:
+   - Set CORS to allow uploads from any origin (`*`)
+   - Made bucket objects publicly readable
+   - Granted the service account full access to bucket objects
+3. Created comprehensive documentation (STORAGE_SETUP.md) for setting up GCS integration, including:
+   - Service account creation and key generation
+   - Adding the credentials to GitHub Secrets
+   - Running the setup script
+   - Verifying the configuration
+
+**Outcome:** Images uploaded through the Strapi admin panel are now correctly stored in GCS and accessible through the API. The bucket CORS configuration allows browser-based uploads, and the service account has the necessary permissions to write to the bucket.
+
+**Decision:** Standardized GCS configuration and documented the setup process in detail to prevent similar issues in the future. Added the service account key instructions to the deployment guide.
+
+---
+
 **IMPORTANT!!! General Project Rules & Notes:**
 
 *   **Initial State:** Assume both backend (Strapi) and frontend (Next.js) servers are initially down. They need to be started manually (e.g., `npm run develop` / `npm run dev`).

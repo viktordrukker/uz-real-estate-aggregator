@@ -64,6 +64,9 @@ jobs:
           DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
           DATABASE_SSL=true
           GCS_BUCKET_NAME=${{ secrets.GCS_BUCKET_NAME }}
+          GCS_SERVICE_ACCOUNT_KEY_JSON=${{ secrets.GCS_SERVICE_ACCOUNT_KEY_JSON }}
+          GCS_PUBLIC_FILES=true
+          GCS_UNIFORM=false
           JWT_SECRET=${{ secrets.JWT_SECRET }}
           ADMIN_JWT_SECRET=${{ secrets.ADMIN_JWT_SECRET }}
           API_TOKEN_SALT=${{ secrets.API_TOKEN_SALT }}
