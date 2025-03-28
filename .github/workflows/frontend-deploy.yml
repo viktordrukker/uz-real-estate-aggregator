@@ -4,8 +4,11 @@ on:
   push:
     branches: [main, master]
     paths:
+      - 'frontend/**'
       - 'uz-real-estate-aggregator/frontend/**'
-      - '.github/workflows/frontend-deploy.yml' # Also trigger on workflow changes
+      - '.github/workflows/frontend-deploy.yml'
+  # Allow manual workflow dispatch
+  workflow_dispatch:
 
 env:
   GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
