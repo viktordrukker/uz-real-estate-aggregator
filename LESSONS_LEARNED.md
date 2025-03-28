@@ -352,6 +352,45 @@ This document tracks key technical findings, decisions, and workarounds encounte
 
 ---
 
+**Date:** 2025-03-28
+
+**Topic:** Content Security Policy (CSP) Configuration for Google Cloud Storage Images
+
+**Issue:** While the original images stored in Google Cloud Storage were accessible through direct URLs, the frontend application still had difficulty displaying them due to Content Security Policy restrictions in Strapi.
+
+**Investigation:**
+1. Found that Strapi's default security middleware was blocking image loading from external domains including Google Cloud Storage.
+2. Discovered that even with correct URL construction, images would be blocked by the browser's security policies.
+3. Examined Strapi's middleware configuration in `backend/config/middlewares.ts` and found that CSP settings needed adjustments.
+4. Determined that a specific production middleware configuration would provide more control.
+
+**Resolution:**
+1. Updated the security middleware configuration to explicitly allow content from Google Cloud Storage:
+   ```javascript
+   {
+     name: 'strapi::security',
+     config: {
+       contentSecurityPolicy: {
+         directives: {
+           'connect-src': ["'self'", 'https:'],
+           'img-src': ["'self'", 'data:', 'blob:', 'storage.googleapis.com'],
+           'media-src': ["'self'", 'data:', 'blob:', 'storage.googleapis.com'],
+           upgradeInsecureRequests: null,
+         },
+       },
+     },
+   }
+   ```
+2. Created a production-specific middleware configuration to ensure these settings were applied in the Cloud Run environment.
+3. Explicitly added `sharp` dependency (v0.32.6) to ensure proper image processing capabilities.
+4. Cleaned up conflicting and duplicate GCS provider dependencies.
+
+**Outcome:** Images from Google Cloud Storage now load correctly in both the Strapi admin panel and the frontend application, with proper security policies in place.
+
+**Decision:** Always configure Content Security Policy settings when using external storage providers like Google Cloud Storage, and maintain separate development/production configurations when needed.
+
+---
+
 **IMPORTANT!!! General Project Rules & Notes:**
 
 *   **Initial State:** Assume both backend (Strapi) and frontend (Next.js) servers are initially down. They need to be started manually (e.g., `npm run develop` / `npm run dev`).

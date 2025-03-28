@@ -11,13 +11,15 @@ export default ({ env }) => ({
         // keyFilename: env('GOOGLE_APPLICATION_CREDENTIALS', undefined),
         baseUrl: env('GCS_BASE_URL', `https://storage.googleapis.com/${env('GCS_BUCKET_NAME')}`),
         basePath: env('GCS_BASE_PATH', ''),
-        // Explicitly enable image transformations and configure paths
+        // Enhanced image transformation settings
         enableTransformations: true,
         transformationsPath: 'formats',
+        // Specify direct formats by name for better reliability
+        formats: ['large', 'medium', 'small', 'thumbnail'],
         // Add caching headers to improve performance
         cacheMaxAge: 3600 * 24 * 7, // 7 days
-        // Debug settings
-        debug: true, // Enable debug output for troubleshooting
+        // Enable more verbose logging for troubleshooting
+        debug: true,
       },
     },
   },

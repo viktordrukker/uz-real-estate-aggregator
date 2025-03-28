@@ -1,3 +1,4 @@
+// Production-specific middleware configuration that overrides the default config
 export default [
   'strapi::logger',
   'strapi::errors',
@@ -14,18 +15,15 @@ export default [
       },
     },
   },
-  // Configure CORS to allow requests from the frontend development server
+  // Configure CORS to allow requests from the frontend production URLs
   {
     name: 'strapi::cors',
     config: {
       enabled: true,
       headers: '*', // Allow all headers
-      // Allow requests from localhost:3000 (frontend dev server)
-      // and the deployed frontend URLs
       origin: [
-        'http://localhost:3000',
-        'https://uz-rea-frontend-480221447899.europe-west1.run.app', // From error
-        'https://uz-rea-frontend-m3kpztxi4a-ew.a.run.app' // Other potential URL
+        'https://uz-rea-frontend-480221447899.europe-west1.run.app',
+        'https://uz-rea-frontend-m3kpztxi4a-ew.a.run.app'
       ],
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
       credentials: true, // Allow cookies/auth headers
