@@ -43,8 +43,8 @@ jobs:
     - name: Build Docker image
       # Removed working-directory, using cd instead
       run: |-
-        cd frontend && docker build . \
-          --build-arg NEXT_PUBLIC_STRAPI_API_URL=${{ secrets.NEXT_PUBLIC_STRAPI_API_URL_PROD }} \
+        cd frontend && docker build . --no-cache \
+          --build-arg NEXT_PUBLIC_STRAPI_API_URL=${{ secrets.NEXT_PUBLIC_STRAPI_API_URL }} \ # Corrected secret name
           --build-arg NEXT_PUBLIC_YANDEX_MAPS_API_KEY=${{ secrets.NEXT_PUBLIC_YANDEX_MAPS_API_KEY }} \
           -t ${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/${{ env.ARTIFACT_REGISTRY_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
