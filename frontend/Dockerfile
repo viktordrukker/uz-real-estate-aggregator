@@ -23,7 +23,7 @@ ARG NEXT_PUBLIC_YANDEX_MAPS_API_KEY
 
 # Set environment variables for the build process
 ENV NODE_ENV=production
-ENV NEXT_PUBLIC_STRAPI_URL=${NEXT_PUBLIC_STRAPI_URL} # Match code variable name
+ENV NEXT_PUBLIC_STRAPI_URL=${NEXT_PUBLIC_STRAPI_URL}
 ENV NEXT_PUBLIC_YANDEX_MAPS_API_KEY=${NEXT_PUBLIC_YANDEX_MAPS_API_KEY}
 
 # Build the Next.js application
