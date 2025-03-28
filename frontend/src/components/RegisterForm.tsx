@@ -6,7 +6,12 @@ import { useRouter } from 'next/navigation';
 // Function to handle the registration API call
 const handleRegister = async (username: string, email: string, password: string): Promise<any> => {
   console.log('Attempting registration with:', { username, email, password });
-  const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_URL || 'http://localhost:1337';
+  // Ensure we use the environment variable provided during build
+  const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_URL;
+  if (!strapiUrl) {
+    console.error("Error: NEXT_PUBLIC_STRAPI_URL environment variable is not set.");
+    throw new Error("API URL configuration error.");
+  }
 
   try {
     const res = await fetch(`${strapiUrl}/api/auth/local/register`, {
