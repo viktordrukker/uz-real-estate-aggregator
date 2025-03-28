@@ -19,12 +19,27 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, initialIsFavorite
     return null;
   }
 
-  // Get the URL for the primary image (using flat structure)
+  // Get the URL for the primary image with better fallback handling
   const firstImage = property.images?.[0];
   const strapiUrl = process.env.NEXT_PUBLIC_STRAPI_URL; // Use correct env var
-  const imageUrl = firstImage && strapiUrl
-    ? `${strapiUrl}${firstImage.formats?.small?.url || firstImage.url}`
-    : '/placeholder.png';
+  
+  // Function to generate image URL with format fallbacks
+  const getImageUrl = () => {
+    if (!firstImage || !strapiUrl) return '/placeholder.png';
+    
+    // Try to get the URL in order of preference: small format, medium format, original
+    const imageUrl = `${strapiUrl}${
+      firstImage.formats?.small?.url || 
+      firstImage.formats?.medium?.url || 
+      firstImage.formats?.thumbnail?.url || 
+      firstImage.url
+    }`;
+    
+    console.log(`Loading image for property ${property.id}: ${imageUrl}`);
+    return imageUrl;
+  };
+
+  const imageUrl = getImageUrl();
 
   const { user } = useAuth();
   const { isFavorited, addFavorite, removeFavorite, isLoading: favoritesLoading } = useFavorites(); // Use context
@@ -86,7 +101,10 @@ const PropertyCard: React.FC<PropertyCardProps> = ({ property, initialIsFavorite
           src={imageUrl}
           alt={firstImage?.alternativeText || property.title || 'Property image'}
           className="w-full h-full object-cover"
-          onError={(e) => { (e.target as HTMLImageElement).src = '/placeholder.png'; }}
+          onError={(e) => { 
+            console.log(`Image failed to load, falling back to placeholder: ${imageUrl}`); 
+            (e.target as HTMLImageElement).src = '/placeholder.png'; 
+          }}
         />
       </div>
       <div className="p-4">
